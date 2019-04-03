@@ -1,0 +1,33 @@
+mood
+- Stays the same unless changes are made
+- Linear interpolate between datapoints
+- Average of person
+- Missing data at start we ignore
+- Fit a gaussian on the data from which we sample missing data. This introduces
+  noise, reducing the chance of introducing a bias towards the values.
+
+circumplex.arousal
+circumplex.arousal
+activity
+- Similar to mood
+
+call
+sms
+- Count the number of occurences
+
+screen
+appCat.builtin
+appCat.communication
+appCat.entertainment
+appCat.finance
+appCat.game
+appCat.office
+appCat.other
+appCat.social
+appCat.travel
+appCat.unknown
+appCat.utilities
+appCat.weather
+- take the sum, since they are a duration or a count
+
+
