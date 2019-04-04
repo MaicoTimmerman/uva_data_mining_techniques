@@ -41,10 +41,10 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     freq='D'
     )
 
-    def blanker(temper):
-        date_range = temper.index.unique(level='time')
-        unique_id = temper.index.unique(level='id')
-        unique_variables = temper.index.unique(level='variable')
+    def blanker(df):
+        date_range = df.index.unique(level='time')
+        unique_id = df.index.unique(level='id')
+        unique_variables = df.index.unique(level='variable')
 
         blank_dataframe = (
             pd.MultiIndex
@@ -59,6 +59,19 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     temper = temper.reindex(blank_dataframe)
     temper = temper.unstack()
     temper.columns = temper.columns.get_level_values(2)
+
+    def add_time_features(df):
+
+        df['WEEKEND'] = ((pd.DatetimeIndex(df.index.get_level_values("time")).dayofweek) // 5 == 1).astype(int)
+        df['MONDAY'] = ((pd.DatetimeIndex(df.index.get_level_values("time")).dayofweek) == 0).astype(int)
+
+        df['SPRING'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([3,4,5]), 1, 0)
+        df['SUMMER'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([6,7,8]), 1, 0)
+        df['AUTUMN'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([9,10,11]), 1, 0)
+        df['WINTER'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([12,1,2]), 1, 0)
+        return df
+    temper = add_time_features(temper)
+    
     return temper
 
     # df_by_day = using_Grouper(df)
@@ -131,5 +144,10 @@ if __name__ == "__main__":
 
     # calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
-    print(df.info())
-    print(df.index)
+    # df = df.reset_index()
+
+
+    print(df)
+    # print(df.corr(method='pearson'))
+    # print(df.info())
+    # print(df.index)
