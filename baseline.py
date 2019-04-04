@@ -108,11 +108,11 @@ def calculate_baseline(df):
     for id, new_df in df.groupby(level='id'):
         previous_value = np.nan
         for time, mood in new_df.groupby(level='time'):
-            if np.isnan(previous_value):
-                previous_value = mood.mood.values[0]
-                continue
+            # if np.isnan(previous_value):
+            #     previous_value = mood.mood.values[0]
+            #     continue
 
-            if not np.isnan(mood.mood.values[0]):
+            if (not np.isnan(mood.mood.values[0]) and not np.isnan(previous_value)):
                 loss += abs(previous_value - mood.mood.values[0])
                 counter += 1
             previous_value = mood.mood.values[0]
@@ -122,6 +122,7 @@ def calculate_baseline(df):
 
 def fill_df_with_nans(df):
     """
+    DEPRECIATED
     handling missing missing values
 
     To create data with added missing values (if we wanted for example to have
