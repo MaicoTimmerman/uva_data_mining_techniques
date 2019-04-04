@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
@@ -100,16 +101,21 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     # return df_by_day.sort_index(level=["id", "time"])
 
 
-def calculate_baseline(df: pd.DataFrame):
-    df_mood = df.loc[(slice(None), slice(None), ["mood"]), :]
-    
-    loss = 0
+def calculate_baseline(df):
+
     counter = 0
-    for index, row in df_mood.iterrows():
-        index_prev_day = (index[0], index[1] + pd.DateOffset(-1), "mood")
-        if index_prev_day in df_mood.index:
-            loss += abs(row.value - df_mood.loc[index_prev_day].value)
-            counter += 1
+    loss = 0
+    for id, new_df in df.groupby(level='id'):
+        previous_value = np.nan
+        for time, mood in new_df.groupby(level='time'):
+            if np.isnan(previous_value):
+                previous_value = mood.mood.values[0]
+                continue
+
+            if not np.isnan(mood.mood.values[0]):
+                loss += abs(previous_value - mood.mood.values[0])
+                counter += 1
+            previous_value = mood.mood.values[0]
 
     print("Average loss %f over %d datapoints" % (loss / counter, counter))
 
@@ -162,12 +168,12 @@ def create_instance_dataset(dataset):
 if __name__ == "__main__":
     df = load_data()
 
-    # calculate_baseline(df)
-    # daan_frame = create_instance_dataset(df)
-    # df = df.reset_index()
+    calculate_baseline(df)
 
+    # daan_frame = create_instance_dataset(df)
 
     # print(df)
-    # print(df.corr(method='pearson'))
+    plt.matshow(df.corr(method='pearson'))
+    plt.show()
     # print(df.info())
     # print(df.index)
