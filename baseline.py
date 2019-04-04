@@ -57,8 +57,8 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
     blank_dataframe = blanker(temper)
     temper = temper.reindex(blank_dataframe)
-    temper= temper.unstack()
-
+    temper = temper.unstack()
+    temper.columns = temper.columns.get_level_values(2)
     return temper
 
     # df_by_day = using_Grouper(df)
@@ -128,7 +128,8 @@ def create_instance_dataset(dataset):
 
 if __name__ == "__main__":
     df = load_data()
-    
+
     # calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
-    print(df)
+    print(df.info())
+    print(df.index)
