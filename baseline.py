@@ -10,12 +10,14 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     df.set_index(['id', 'variable', 'time'], inplace=True)
 
     def using_Grouper(df):
+        to_mean = ["mood", "circumplex.arousal", "circumplex.valence"]
         level_values = df.index.get_level_values
         a = [level_values(i) for i in [0,1]]
         b = [pd.Grouper(freq='D', level='time')]
         c = [pd.Grouper(level='variable')]
         c = df.groupby(a+b)
-        d = c.agg([np.sum, np.mean])
+        # d = c.agg([np.sum, np.mean])
+        d = c.apply(lambda x: np.where(x.index.isin(to_mean, level='variable'), x.mean(), x.sum())[0])
         return d
 
     # Now we create a multi-index. We set the hierarchy to be: ID -> Time ->
@@ -23,14 +25,16 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
     df_by_day = using_Grouper(df)
 
-    to_mean = ["mood", "circumplex.arousal", "circumplex.valence"]
+    # print(df_by_day)
 
-    df_by_day['value2'] = np.where(df_by_day.index.isin(to_mean, level='variable'), df_by_day['value']['mean'], df_by_day['value']['sum'])
-    # df_by_day.loc[("AS14.01", "mood")]
-    df_by_day.drop('value', axis=1, inplace=True)
-    df_by_day.rename(columns={'value2':'value'}, inplace=True)
-    print(df_by_day.info())
-
+    # to_mean = ["mood", "circumplex.arousal", "circumplex.valence"]
+    #
+    # df_by_day['value2'] = np.where(df_by_day.index.isin(to_mean, level='variable'), df_by_day['value']['mean'], df_by_day['value']['sum'])
+    # # df_by_day.loc[("AS14.01", "mood")]
+    # df_by_day.drop('value', axis=1, inplace=True)
+    # df_by_day.rename(columns={'value2':'value'}, inplace=True)
+    # print(df_by_day)
+    # print(sad)
     temper = df_by_day.reset_index()
     temper.set_index(['id', 'time', 'variable'], inplace=True)
     temper.sort_index(level=["id", "time"], inplace=True)
@@ -58,7 +62,7 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     blank_dataframe = blanker(temper)
     temper = temper.reindex(blank_dataframe)
     temper = temper.unstack()
-    temper.columns = temper.columns.get_level_values(2)
+    temper.columns = temper.columns.get_level_values(1)
 
     def add_time_features(df):
 
@@ -71,7 +75,23 @@ def load_data(filename='dataset_mood_smartphone.csv'):
         df['WINTER'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([12,1,2]), 1, 0)
         return df
     temper = add_time_features(temper)
-    
+
+    def normalize_minutes(df):
+        time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
+        'appCat.entertainment', 'appCat.finance', 'appCat.game',
+        'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+        'appCat.unknown', 'appCat.utilities', 'appCat.weather']
+
+        minutes_in_day = 1440
+
+        for variable in time_variables:
+            variable_new_name = variable + '_normalized'
+            df[variable_new_name] = df[variable].apply(lambda x: x/minutes_in_day)
+
+        return df
+
+    temper = normalize_minutes(temper)
+    # print(temper.info())
     return temper
 
     # df_by_day = using_Grouper(df)
@@ -82,7 +102,7 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
 def calculate_baseline(df: pd.DataFrame):
     df_mood = df.loc[(slice(None), slice(None), ["mood"]), :]
-
+    
     loss = 0
     counter = 0
     for index, row in df_mood.iterrows():
@@ -147,7 +167,7 @@ if __name__ == "__main__":
     # df = df.reset_index()
 
 
-    print(df)
+    # print(df)
     # print(df.corr(method='pearson'))
     # print(df.info())
     # print(df.index)
