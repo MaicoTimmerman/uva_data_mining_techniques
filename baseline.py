@@ -54,7 +54,7 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     temper = temper.unstack()
     temper.columns = temper.columns.get_level_values(1)
 
-    temper = interpolate_data(temper)
+    # temper = interpolate_data(temper)
     temper = add_time_features(temper)
     temper = normalize_minutes(temper)
     # print(temper.info())
@@ -105,7 +105,8 @@ def add_time_features(df):
 
     df['SPRING'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([3,4,5]), 1, 0)
     df['SUMMER'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([6,7,8]), 1, 0)
-    df['AUTUMN'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([9,10,11]), 1, 0)
+    # There are no autumn days in our dataset.
+    # df['AUTUMN'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([9,10,11]), 1, 0)
     df['WINTER'] = np.where((pd.DatetimeIndex(df.index.get_level_values("time")).month).isin([12,1,2]), 1, 0)
     return df
 
@@ -115,12 +116,12 @@ def normalize_minutes(df):
     'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
     'appCat.unknown', 'appCat.utilities', 'appCat.weather']
 
-    minutes_in_day = 86400
+    seconds_in_day = 86400
 
     for variable in time_variables:
         # variable_new_name = variable + '_normalized'
         variable_new_name = variable
-        df[variable_new_name] = df[variable].apply(lambda x: x/minutes_in_day)
+        df[variable_new_name] = df[variable].apply(lambda x: x/seconds_in_day)
 
     return df
 
@@ -128,7 +129,8 @@ def create_instance_dataset(dataset):
     n_days = 3
     instance_dataset = []
     for person in dataset.index.unique(level='id'):
-        series = dataset.loc[(person, slice(None))].unstack()
+        # series = dataset.loc[(person, slice(None))].unstack()
+        series = dataset.loc[(person, slice(None))]
         days_count = len(series)
         series = series.transpose()
         for i in range(days_count-n_days):
@@ -137,6 +139,7 @@ def create_instance_dataset(dataset):
             interval = series.loc[:, series.columns[i:i+n_days]]
             instance_dataset.append((person, target_day, interval, target))
     return instance_dataset
+
 
 def correlation_matrix(df):
     # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html#sphx-glr-gallery-images-contours-and-fields-image-annotated-heatmap-py
@@ -173,21 +176,31 @@ def box_plot(df):
          rotation_mode="anchor")
     plt.show()
 
+def scatter_matrix_plot(df):
+    from pandas.plotting import scatter_matrix
+
+    ax = scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+
+    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
+    # ax.set_xticks(np.arange(len(labels)))
+    # ax.set_xticklabels(labels)
+    # plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+    #      rotation_mode="anchor")
+    plt.show()
+
 if __name__ == "__main__":
     df = load_data()
 
     calculate_baseline(df)
-    # daan_frame = create_instance_dataset(df)
-
-    print(df.describe())
+    daan_frame = create_instance_dataset(df)
+    # print(daan_frame)
+    # print(df.describe())
     correlation_matrix(df)
     box_plot(df)
 
-    df.hist()
-    plt.show()
-
-    # from pandas.plotting import scatter_matrix
-    # scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+    # df.hist()
     # plt.show()
+    # scatter_matrix_plot(df)
+
     # print(df.info())
     # print(df.columns)
