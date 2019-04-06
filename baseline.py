@@ -12,7 +12,7 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     df.set_index(['id', 'variable', 'time'], inplace=True)
 
     def using_Grouper(df):
-        to_mean = ["mood", "circumplex.arousal", "circumplex.valence"]
+        to_mean = ["mood", "circumplex.arousal", "circumplex.valence", "activity"]
         level_values = df.index.get_level_values
         a = [level_values(i) for i in [0,1]]
         b = [pd.Grouper(freq='D', level='time')]
@@ -22,7 +22,7 @@ def load_data(filename='dataset_mood_smartphone.csv'):
         return d
 
     df_by_day = using_Grouper(df)
-    
+
     # we create a multi-index. We set the hierarchy to be: ID -> Time ->
     # variables: value]
 
@@ -115,10 +115,11 @@ def normalize_minutes(df):
     'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
     'appCat.unknown', 'appCat.utilities', 'appCat.weather']
 
-    minutes_in_day = 1440
+    minutes_in_day = 86400
 
     for variable in time_variables:
-        variable_new_name = variable + '_normalized'
+        # variable_new_name = variable + '_normalized'
+        variable_new_name = variable
         df[variable_new_name] = df[variable].apply(lambda x: x/minutes_in_day)
 
     return df
@@ -137,16 +138,56 @@ def create_instance_dataset(dataset):
             instance_dataset.append((person, target_day, interval, target))
     return instance_dataset
 
+def correlation_matrix(df):
+    # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html#sphx-glr-gallery-images-contours-and-fields-image-annotated-heatmap-py
+    labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
+    fig, ax = plt.subplots()
+
+    matrix = df.corr(method='pearson').values
+
+    im = ax.imshow(matrix)
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_yticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+
+    # for i in range(len(labels)):
+    #     for j in range(len(labels)):
+    #         text = ax.text(j, i, matrix[i, j],
+    #                        ha="center", va="center", color="w")
+
+    fig.tight_layout()
+    plt.show()
+
+def box_plot(df):
+    ax = df.boxplot()
+
+    labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
+    labels.insert(0, "")
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+    plt.show()
 
 if __name__ == "__main__":
     df = load_data()
 
     calculate_baseline(df)
-
     # daan_frame = create_instance_dataset(df)
 
-    print(print(df.loc[('AS14.01', slice(None)), 'mood']))
-    plt.matshow(df.corr(method='pearson'))
+    print(df.describe())
+    correlation_matrix(df)
+    box_plot(df)
+
+    df.hist()
     plt.show()
+
+    # from pandas.plotting import scatter_matrix
+    # scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+    # plt.show()
     # print(df.info())
-    # print(df.index)
+    # print(df.columns)
