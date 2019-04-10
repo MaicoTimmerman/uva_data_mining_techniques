@@ -84,7 +84,8 @@ def interpolate_data(df):
 
     to_interpolate_linear += ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
 
-    to_interpolate_pad = ['mood']
+    df['mood_interpolated'] = df['mood']
+    to_interpolate_pad = ['mood_interpolated']
 
     for id in df.index.unique(level='id'):
         for variable in to_interpolate_linear:
