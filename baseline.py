@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pickle
 from pathlib import Path
 import argparse
+from random import shuffle
 
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
@@ -231,12 +232,14 @@ def scatter_matrix_plot(df):
     #      rotation_mode="anchor")
     plt.show()
 
-def split_dataset_by_person (dataset):
-    print(dataset.info())
-    training_set = []
-    test_set = []
+def split_dataset_by_person (dataset, test_fraction=0.2):
+    ding = df.groupby(level='id')
+    split = [(id, new_df) for id, new_df in ding]
+    shuffle(split)
+    splitpoint = int(len(split) * (1-test_fraction))
+    training_set = split[:splitpoint]
+    test_set = split[splitpoint:]
     return training_set, test_set
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
@@ -259,11 +262,11 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    calculate_baseline(df)
+    # calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
 
-    # training_set, test_set = split_dataset_by_person(df)
-
+    training_set, test_set = split_dataset_by_person(df)
+    print(training_set[0][1].info())
     # print(daan_frame)
     # # print(df.describe())
     # correlation_matrix(df)
