@@ -69,7 +69,7 @@ def calculate_baseline(df):
                 counter += 1
             previous_value = mood.mood.values[0]
 
-    print("Average loss %3.9f over %d datapoints" % (loss**.5 / counter, counter))
+    print("Average loss %3.9f over %d datapoints" % ((loss / counter)**.5, counter))
 
 def interpolate_data(df):
 
