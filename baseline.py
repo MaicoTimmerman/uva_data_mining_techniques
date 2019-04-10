@@ -240,10 +240,10 @@ def split_dataset_by_person (dataset):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
     parser.add_argument('--force_preprocess', action='store_true')
-    args = vars(parser.parse_args())
+    args = parser.parse_args()
 
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
-    if not preprocessed_dataset_file.exists() or args['force_preprocess']:
+    if not preprocessed_dataset_file.exists() or args.force_preprocess:
         print('Loading and preprocessing data.')
         df = load_data()
         df = calculate_deviance(df)
