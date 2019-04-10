@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from pathlib import Path
+import argparse
 
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
@@ -237,8 +238,12 @@ def split_dataset_by_person (dataset):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
+    parser.add_argument('--force_preprocess', action='store_true')
+    args = vars(parser.parse_args())
+
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
-    if not preprocessed_dataset_file.exists():
+    if not preprocessed_dataset_file.exists() or args['force_preprocess']:
         print('Loading and preprocessing data.')
         df = load_data()
         df = calculate_deviance(df)
