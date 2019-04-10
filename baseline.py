@@ -75,15 +75,24 @@ def calculate_baseline(df):
 
     print("Average loss %3.9f over %d datapoints" % ((loss / counter)**.5, counter))
 
-def interpolate_data(df):
-
-    to_interpolate_linear = ['activity', 'appCat.builtin', 'appCat.communication',
+def replace_nans_with_zeros (df):
+    to_fix = ['appCat.builtin', 'appCat.communication',
        'appCat.entertainment', 'appCat.finance', 'appCat.game',
        'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
        'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
-       'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
+       'circumplex.arousal', 'screen', 'sms']
+    df[to_fix] = df[to_fix].fillna(0)
+    return df
 
-    to_interpolate_linear += ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
+def interpolate_data(df):
+
+    # to_interpolate_linear = ['activity', 'appCat.builtin', 'appCat.communication',
+    #    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    #    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    #    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
+    #    'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
+
+    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
 
     df['mood_interpolated'] = df['mood']
     to_interpolate_pad = ['mood_interpolated']
@@ -250,6 +259,7 @@ if __name__ == "__main__":
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         print('Loading and preprocessing data.')
         df = load_data()
+        df = replace_nans_with_zeros(df)
         df = calculate_deviance(df)
         df = interpolate_data(df)
         df = add_time_features(df)
