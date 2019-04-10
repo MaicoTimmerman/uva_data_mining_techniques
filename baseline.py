@@ -54,7 +54,8 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     temper = temper.unstack()
     temper.columns = temper.columns.get_level_values(1)
 
-    # temper = interpolate_data(temper)
+    temper = calculate_deviance(temper)
+    temper = interpolate_data(temper)
     temper = add_time_features(temper)
     temper = normalize_minutes(temper)
     # print(temper.info())
@@ -82,6 +83,8 @@ def interpolate_data(df):
        'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
        'circumplex.arousal', 'circumplex.valence', 'mood', 'screen', 'sms',]
 
+    to_interpolate_linear += ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
+
     to_interpolate_pad = []
 
     for id in df.index.unique(level='id'):
@@ -94,8 +97,34 @@ def interpolate_data(df):
         for variable in to_interpolate_pad:
             df.loc[(id, slice(None))][variable] =\
             df.loc[(id, slice(None))][variable].interpolate(method='pad', limit_direction='forward')
+    # print(df.loc[('AS14.01', slice(None)), 'mood'])
+    return df
 
-    # print(df.loc[('AS14.01', slice(None)), 'activity'])
+def calculate_deviance(df):
+
+    # to_calculate_deviance = ['activity', 'appCat.builtin', 'appCat.communication',
+    #    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    #    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    #    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
+    #    'circumplex.arousal', 'circumplex.valence', 'mood', 'screen', 'sms',]
+
+    to_calculate_deviance = ['mood', 'circumplex.arousal', 'circumplex.valence']
+
+    for variable in to_calculate_deviance:
+        variable_Deviance = variable + 'Deviance'
+        df[variable_Deviance] = np.nan
+
+    for id in df.index.unique(level='id'):
+        for variable in to_calculate_deviance:
+            variable_Deviance = variable + 'Deviance'
+            variable_average = df.loc[(id, slice(None))][variable].mean()
+
+            df.loc[(id, slice(None))][variable_Deviance] =\
+            df.loc[(id, slice(None))][variable].apply(lambda x: x - variable_average)
+
+
+    # print(df.loc[('AS14.01', slice(None)), 'moodDeviance'])
+    # print(df.loc[('AS14.01', slice(None)), 'mood'])
     return df
 
 def add_time_features(df):
@@ -135,7 +164,7 @@ def create_instance_dataset(dataset):
         series = series.transpose()
         for i in range(days_count-n_days):
             target_day = series.columns[i+n_days]
-            target = series.loc[('value', '', 'mood'), target_day]
+            target = series.loc['mood', target_day]
             interval = series.loc[:, series.columns[i:i+n_days]]
             instance_dataset.append((person, target_day, interval, target))
     return instance_dataset
@@ -177,10 +206,24 @@ def box_plot(df):
     plt.show()
 
 def scatter_matrix_plot(df):
+    # https://machinelearningmastery.com/visualize-machine-learning-data-python-pandas/
     from pandas.plotting import scatter_matrix
 
-    ax = scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+    # fig, ax = plt.subplots()
+    #
+    scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
+    # print(type(scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')))
+    print(plt)
+    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
+    # # ax.set_xticks(np.arange(len(labels)))
+    # # ax.set_yticks(np.arange(len(labels)))
+    # ax.set_xticklabels(labels)
+    # ax.set_yticklabels(labels)
+    #
+    # plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+    #      rotation_mode="anchor")
 
+    # fig.tight_layout()
     # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
     # ax.set_xticks(np.arange(len(labels)))
     # ax.set_xticklabels(labels)
@@ -192,14 +235,19 @@ if __name__ == "__main__":
     df = load_data()
 
     calculate_baseline(df)
-    daan_frame = create_instance_dataset(df)
+    # daan_frame = create_instance_dataset(df)
     # print(daan_frame)
     # print(df.describe())
-    correlation_matrix(df)
-    box_plot(df)
+    # correlation_matrix(df)
+    # box_plot(df)
 
-    # df.hist()
-    # plt.show()
+    df.hist()
+    # plt.axis('image')
+    plt.tight_layout()
+    # plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    # plt.tight_layout(pad = 1)
+    # plt.rcParams.update({'font.size': 2})
+    plt.show()
     # scatter_matrix_plot(df)
 
     # print(df.info())
