@@ -251,12 +251,12 @@ if __name__ == "__main__":
     else:
         file_stream = open(preprocessed_dataset_file, 'rb')
         df = pickle.load(file_stream)
-        print(f'Loaded preprocessed dataset to \'{preprocessed_dataset_file}\'.')
+        print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
     calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
 
-    training_set, test_set = split_dataset_by_person(df)
+    # training_set, test_set = split_dataset_by_person(df)
 
     # print(daan_frame)
     # # print(df.describe())
