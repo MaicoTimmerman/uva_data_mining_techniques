@@ -54,10 +54,6 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     temper = temper.unstack()
     temper.columns = temper.columns.get_level_values(1)
 
-    temper = calculate_deviance(temper)
-    temper = interpolate_data(temper)
-    temper = add_time_features(temper)
-    temper = normalize_minutes(temper)
     # print(temper.info())
     return temper
 
@@ -69,11 +65,11 @@ def calculate_baseline(df):
         previous_value = np.nan
         for time, mood in new_df.groupby(level='time'):
             if (not np.isnan(mood.mood.values[0]) and not np.isnan(previous_value)):
-                loss += abs(previous_value - mood.mood.values[0])
+                loss += abs(previous_value - mood.mood.values[0])**2
                 counter += 1
             previous_value = mood.mood.values[0]
 
-    print("Average loss %f over %d datapoints" % (loss / counter, counter))
+    print("Average loss %3.9f over %d datapoints" % (loss**.5 / counter, counter))
 
 def interpolate_data(df):
 
@@ -81,11 +77,11 @@ def interpolate_data(df):
        'appCat.entertainment', 'appCat.finance', 'appCat.game',
        'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
        'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
-       'circumplex.arousal', 'circumplex.valence', 'mood', 'screen', 'sms',]
+       'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
 
     to_interpolate_linear += ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
 
-    to_interpolate_pad = []
+    to_interpolate_pad = ['mood']
 
     for id in df.index.unique(level='id'):
         for variable in to_interpolate_linear:
@@ -96,7 +92,7 @@ def interpolate_data(df):
 
         for variable in to_interpolate_pad:
             df.loc[(id, slice(None))][variable] =\
-            df.loc[(id, slice(None))][variable].interpolate(method='pad', limit_direction='forward')
+            df.loc[(id, slice(None))][variable].interpolate(method='pad', limit_direction='forward', limit = 5)
     # print(df.loc[('AS14.01', slice(None)), 'mood'])
     return df
 
@@ -234,20 +230,25 @@ def scatter_matrix_plot(df):
 if __name__ == "__main__":
     df = load_data()
 
+    df = calculate_deviance(df)
+    df = interpolate_data(df)
+    df = add_time_features(df)
+    df = normalize_minutes(df)
+
     calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
     # print(daan_frame)
-    # print(df.describe())
+    # # print(df.describe())
     # correlation_matrix(df)
     # box_plot(df)
-
-    df.hist()
-    # plt.axis('image')
-    plt.tight_layout()
-    # plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-    # plt.tight_layout(pad = 1)
-    # plt.rcParams.update({'font.size': 2})
-    plt.show()
+    #
+    # df.hist()
+    # # plt.axis('image')
+    # # plt.tight_layout()
+    # # plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    # # plt.tight_layout(pad = 1)
+    # # plt.rcParams.update({'font.size': 2})
+    # plt.show()
     # scatter_matrix_plot(df)
 
     # print(df.info())
