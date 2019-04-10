@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
+from pathlib import Path
 
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
@@ -92,7 +94,7 @@ def interpolate_data(df):
 
         for variable in to_interpolate_pad:
             df.loc[(id, slice(None))][variable] =\
-            df.loc[(id, slice(None))][variable].interpolate(method='pad', limit_direction='forward', limit = 5)
+            df.loc[(id, slice(None))][variable].interpolate(method='pad', limit_direction='forward', limit=None)
     # print(df.loc[('AS14.01', slice(None)), 'mood'])
     return df
 
@@ -227,16 +229,35 @@ def scatter_matrix_plot(df):
     #      rotation_mode="anchor")
     plt.show()
 
-if __name__ == "__main__":
-    df = load_data()
+def split_dataset_by_person (dataset):
+    print(dataset.info())
+    training_set = []
+    test_set = []
+    return training_set, test_set
 
-    df = calculate_deviance(df)
-    df = interpolate_data(df)
-    df = add_time_features(df)
-    df = normalize_minutes(df)
+
+if __name__ == "__main__":
+    preprocessed_dataset_file = Path("preprocessed_data.pkl")
+    if not preprocessed_dataset_file.exists():
+        print('Loading and preprocessing data.')
+        df = load_data()
+        df = calculate_deviance(df)
+        df = interpolate_data(df)
+        df = add_time_features(df)
+        df = normalize_minutes(df)
+        file_stream = open(preprocessed_dataset_file, 'wb')
+        pickle.dump(df, file_stream)
+        print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
+    else:
+        file_stream = open(preprocessed_dataset_file, 'rb')
+        df = pickle.load(file_stream)
+        print(f'Loaded preprocessed dataset to \'{preprocessed_dataset_file}\'.')
 
     calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
+
+    training_set, test_set = split_dataset_by_person(df)
+
     # print(daan_frame)
     # # print(df.describe())
     # correlation_matrix(df)
