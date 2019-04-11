@@ -24,8 +24,9 @@ def load_data(filename='dataset_mood_smartphone.csv'):
         summed = (d.agg('sum', axis=1))
         meaned = (d.apply(lambda x: x.mean()))
 
-        for to_mean in to_mean_list:
-            summed[to_mean] = meaned[to_mean]
+        # for to_mean in to_mean_list:
+        #     summed[to_mean] = meaned[to_mean]
+        summed[to_mean_list] = meaned[to_mean_list]
         return summed
 
     def reindex_to_days(df):
