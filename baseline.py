@@ -5,7 +5,7 @@ import pickle
 from pathlib import Path
 import argparse
 from random import shuffle
-
+from visualizations import *
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
     parse_dates = ['time']
@@ -48,9 +48,11 @@ def load_data(filename='dataset_mood_smartphone.csv'):
         )
         return df.reindex(blank_dataframe)
 
-    df = aggregate_into_days(df)
-    df = reindex_to_days(df)
 
+    df = aggregate_into_days(df)
+    print(df.mood)
+    df = reindex_to_days(df)
+    print(df.mood.plot)
     return df
 
 def calculate_baseline(df):
@@ -170,68 +172,6 @@ def create_instance_dataset(dataset):
             instance_dataset.append((person, target_day, interval, target))
     return instance_dataset
 
-
-def correlation_matrix(df):
-    # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html#sphx-glr-gallery-images-contours-and-fields-image-annotated-heatmap-py
-    labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
-    fig, ax = plt.subplots()
-
-    matrix = df.corr(method='pearson').values
-
-    im = ax.imshow(matrix)
-    ax.set_xticks(np.arange(len(labels)))
-    ax.set_yticks(np.arange(len(labels)))
-    ax.set_xticklabels(labels)
-    ax.set_yticklabels(labels)
-
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-         rotation_mode="anchor")
-
-    # for i in range(len(labels)):
-    #     for j in range(len(labels)):
-    #         text = ax.text(j, i, matrix[i, j],
-    #                        ha="center", va="center", color="w")
-
-    fig.tight_layout()
-    plt.show()
-
-def box_plot(df):
-    ax = df.boxplot()
-
-    labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
-    labels.insert(0, "")
-    ax.set_xticks(np.arange(len(labels)))
-    ax.set_xticklabels(labels)
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-         rotation_mode="anchor")
-    plt.show()
-
-def scatter_matrix_plot(df):
-    # https://machinelearningmastery.com/visualize-machine-learning-data-python-pandas/
-    from pandas.plotting import scatter_matrix
-
-    # fig, ax = plt.subplots()
-    #
-    scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')
-    # print(type(scatter_matrix(df, alpha=0.2, figsize=(6, 6), diagonal='kde')))
-    print(plt)
-    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
-    # # ax.set_xticks(np.arange(len(labels)))
-    # # ax.set_yticks(np.arange(len(labels)))
-    # ax.set_xticklabels(labels)
-    # ax.set_yticklabels(labels)
-    #
-    # plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-    #      rotation_mode="anchor")
-
-    # fig.tight_layout()
-    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
-    # ax.set_xticks(np.arange(len(labels)))
-    # ax.set_xticklabels(labels)
-    # plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-    #      rotation_mode="anchor")
-    plt.show()
-
 def split_dataset_by_person (dataset, test_fraction=0.2):
     ding = df.groupby(level='id')
     split = [(id, new_df) for id, new_df in ding]
@@ -268,21 +208,10 @@ if __name__ == "__main__":
 
     training_set, test_set = split_dataset_by_person(df)
 
-    print(training_set[0][1].info())
-    print(training_set[0][1].head())
-    # print(daan_frame)
-    # # print(df.describe())
-    # correlation_matrix(df)
     # box_plot(df)
-    #
-    # df.hist()
-    # # plt.axis('image')
-    # # plt.tight_layout()
-    # # plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-    # # plt.tight_layout(pad = 1)
-    # # plt.rcParams.update({'font.size': 2})
-    # plt.show()
-    # scatter_matrix_plot(df)
+    # thing(df)
+    # print(training_set[0][1].info())
+    # print(training_set[0][1].head())
 
-    # print(df.info())
-    # print(df.columns)
+    # correlation_matrix(df)
+    scatter_matrix_plot(df)
