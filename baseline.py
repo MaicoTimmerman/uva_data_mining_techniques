@@ -12,54 +12,45 @@ def load_data(filename='dataset_mood_smartphone.csv'):
     df = pd.read_csv(filename, index_col=0,
                      dtype=types, parse_dates=parse_dates)
 
+    df = pd.pivot_table(df, index=['id', 'time'], columns='variable', values='value')
 
-    df.set_index(['id', 'variable', 'time'], inplace=True)
+    def aggregate_into_days(df):
+        to_mean_list = ["mood", "circumplex.arousal", "circumplex.valence", "activity"]
 
-    def using_Grouper(df):
-        to_mean = ["mood", "circumplex.arousal", "circumplex.valence", "activity"]
         level_values = df.index.get_level_values
-        a = [level_values(i) for i in [0,1]]
-        b = [pd.Grouper(freq='D', level='time')]
-        c = [pd.Grouper(level='variable')]
-        c = df.groupby(a+b)
-        d = c.apply(lambda x: np.where(x.index.isin(to_mean, level='variable'), x.mean(), x.sum())[0])
-        return d
+        d = df.groupby([level_values(i) for i in [0]]
+                              +[pd.Grouper(freq='D', level=-1)])
 
-    df_by_day = using_Grouper(df)
+        summed = (d.agg('sum', axis=1))
+        meaned = (d.apply(lambda x: x.mean()))
 
-    # we create a multi-index. We set the hierarchy to be: ID -> Time ->
-    # variables: value]
+        for to_mean in to_mean_list:
+            summed[to_mean] = meaned[to_mean]
+        return summed
 
-    temper = df_by_day.reset_index()
-    temper.set_index(['id', 'time', 'variable'], inplace=True)
-    temper.sort_index(level=["id", "time"], inplace=True)
+    def reindex_to_days(df):
 
-    def blanker(df):
-        # date_range = df.index.unique(level='time')
         date_range = pd.date_range(
-        start="2014-02-17",
-        end="2014-06-9",
-        freq='D'
-        )
+            start="2014-02-17",
+            end="2014-06-9",
+            freq='D'
+            )
+
         unique_id = df.index.unique(level='id')
-        unique_variables = df.index.unique(level='variable')
 
         blank_dataframe = (
             pd.MultiIndex
             .from_product(
-                iterables=[unique_id, date_range, unique_variables],
-                names=['id', 'time', 'variable']
+                iterables=[unique_id, date_range],
+                names=['id', 'time']
             )
         )
-        return blank_dataframe
+        return df.reindex(blank_dataframe)
 
-    blank_dataframe = blanker(temper)
-    temper = temper.reindex(blank_dataframe)
-    temper = temper.unstack()
-    temper.columns = temper.columns.get_level_values(1)
+    df = aggregate_into_days(df)
+    df = reindex_to_days(df)
 
-    # print(temper.info())
-    return temper
+    return df
 
 def calculate_baseline(df):
 
@@ -72,8 +63,7 @@ def calculate_baseline(df):
                 loss += abs(previous_value - mood.mood.values[0])**2
                 counter += 1
             previous_value = mood.mood.values[0]
-
-    print("Average loss %3.9f over %d datapoints" % ((loss / counter)**.5, counter))
+    print("Average loss (RMSE) %3.9f over %d datapoints" % ((loss / counter)**.5, counter))
 
 def replace_nans_with_zeros (df):
     to_fix = ['appCat.builtin', 'appCat.communication',
@@ -272,11 +262,13 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    # calculate_baseline(df)
+    calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
 
     training_set, test_set = split_dataset_by_person(df)
+
     print(training_set[0][1].info())
+    print(training_set[0][1].head())
     # print(daan_frame)
     # # print(df.describe())
     # correlation_matrix(df)
