@@ -33,12 +33,12 @@ def save_plot_samples(train_curve):
 
 def train():
     dataset = InstanceDataset()
-    data_loader = DataLoader(dataset, batch_size=32, num_workers=1,
-                             drop_last=True)
+    data_loader = DataLoader(dataset, shuffle=True, batch_size=32,
+                             num_workers=1, drop_last=True)
 
     epochs = 25
-    model = MLP(dataset[0][0].size, num_hidden=100)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e4)
+    model = MLP(dataset[0][0].size, num_hidden=50)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.MSELoss()
 
     train_curve, val_curve = [], []
@@ -46,6 +46,7 @@ def train():
         model.train()
         t1 = time.time()
         for batch_input, batch_target in data_loader:
+            model.zero_grad()
             batch_output = model.forward(batch_input)
             loss = criterion(batch_output.squeeze(), batch_target)
             loss.backward()
