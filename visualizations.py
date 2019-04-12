@@ -27,7 +27,7 @@ def correlation_matrix(df):
     fig.tight_layout()
     plt.show()
 
-def box_plot(df):
+def box_plot_variable(df):
     ax = df.boxplot()
 
     labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
@@ -60,7 +60,7 @@ def scatter_matrix_plot(df):
 
     plt.show()
 
-def box_plot(df):
+def box_plot_id(df):
 
     axes = df.boxplot(by='id', column=['mood'], grid=False)
     plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
