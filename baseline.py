@@ -1,12 +1,13 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+import argparse
 import pickle
 from pathlib import Path
-import argparse
 from random import shuffle
+from typing import Tuple, Any
+
 from ESN import try_ESN
 from visualizations import *
+
+
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
     parse_dates = ['time']
@@ -51,9 +52,9 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
 
     df = aggregate_into_days(df)
-    print(df.mood)
+
     df = reindex_to_days(df)
-    print(df.mood.plot)
+
     return df
 
 def calculate_baseline(df):
@@ -73,8 +74,7 @@ def replace_nans_with_zeros (df):
     to_fix = ['appCat.builtin', 'appCat.communication',
        'appCat.entertainment', 'appCat.finance', 'appCat.game',
        'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
-       'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
-       'circumplex.arousal', 'screen', 'sms']
+       'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call', 'screen', 'sms']
     df[to_fix] = df[to_fix].fillna(0)
     return df
 
@@ -86,7 +86,9 @@ def interpolate_data(df):
     #    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
     #    'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
 
-    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
+    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance',
+                             'circumplex.valenceDeviance', 'circumplex.arousal',
+                             'circumplex.valence', 'activity']
 
     df['mood_interpolated'] = df['mood']
     to_interpolate_pad = ['mood_interpolated']
@@ -158,7 +160,39 @@ def normalize_minutes(df):
 
     return df
 
-def create_instance_dataset(dataset):
+
+def normalize_dataset(df):
+
+    non_time_variables = ['call', 'sms', 'activity',
+    'circumplex.arousal', 'circumplex.valence', 'sms', 'moodDeviance',
+    'circumplex.arousalDeviance', 'circumplex.valenceDeviance', 'mood_interpolated']
+
+    for variable in non_time_variables:
+        # df[variable]=(df[variable]-df[variable].mean())/df[variable].std()
+        df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
+
+
+    time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
+    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    'appCat.unknown', 'appCat.utilities', 'appCat.weather']
+
+    for variable in time_variables:
+        df[variable]=(df[variable]-df[variable].mean())
+    return df
+
+def remove_wrong_data(df):
+    time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
+    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call', 'sms']
+
+    for variable in time_variables:
+        df[variable][df[variable] < 0] = 0
+    return df
+
+
+def create_instance_dataset(dataset) -> Tuple[Any, Any, pd.DataFrame, float]:
     n_days = 3
     instance_dataset = []
     for person in dataset.index.unique(level='id'):
@@ -170,8 +204,9 @@ def create_instance_dataset(dataset):
             target_day = series.columns[i+n_days]
             target = series.loc['mood', target_day]
             interval = series.loc[:, series.columns[i:i+n_days]]
-            instance_dataset.append((person, target_day, interval, target))
+            instance_dataset.append((person, target_day, interval.drop(labels='mood'), target))
     return instance_dataset
+
 
 def split_dataset_by_person (dataset, test_fraction=0.2):
     ding = df.groupby(level='id')
@@ -196,6 +231,8 @@ if __name__ == "__main__":
         df = interpolate_data(df)
         df = add_time_features(df)
         df = normalize_minutes(df)
+        df = remove_wrong_data(df)
+        df = normalize_dataset(df)
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
         print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
@@ -205,9 +242,12 @@ if __name__ == "__main__":
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
     calculate_baseline(df)
-    # daan_frame = create_instance_dataset(df)
+    daan_frame = create_instance_dataset(df)
 
     training_set, test_set = split_dataset_by_person(df)
+    print(daan_frame[0])
+    # box_plot_id(df)
+    box_plot_variable(df)
 
     try_ESN(training_set, test_set)
     # box_plot(df)
@@ -216,4 +256,4 @@ if __name__ == "__main__":
     # print(training_set[0][1].head())
 
     # correlation_matrix(df)
-    scatter_matrix_plot(df)
+    # scatter_matrix_plot(df)
