@@ -72,8 +72,7 @@ def replace_nans_with_zeros (df):
     to_fix = ['appCat.builtin', 'appCat.communication',
        'appCat.entertainment', 'appCat.finance', 'appCat.game',
        'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
-       'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
-       'circumplex.arousal', 'screen', 'sms']
+       'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call', 'screen', 'sms']
     df[to_fix] = df[to_fix].fillna(0)
     return df
 
@@ -162,7 +161,7 @@ def normalize_minutes(df):
 def normalize_dataset(df):
 
     non_time_variables = ['call', 'sms', 'activity',
-    'circumplex.arousal', 'circumplex.valence', 'mood', 'sms', 'moodDeviance',
+    'circumplex.arousal', 'circumplex.valence', 'sms', 'moodDeviance',
     'circumplex.arousalDeviance', 'circumplex.valenceDeviance', 'mood_interpolated']
 
     for variable in non_time_variables:
@@ -201,7 +200,7 @@ def create_instance_dataset(dataset):
             target_day = series.columns[i+n_days]
             target = series.loc['mood', target_day]
             interval = series.loc[:, series.columns[i:i+n_days]]
-            instance_dataset.append((person, target_day, interval, target))
+            instance_dataset.append((person, target_day, interval.drop(labels='mood'), target))
     return instance_dataset
 
 def split_dataset_by_person (dataset, test_fraction=0.2):
@@ -241,9 +240,9 @@ if __name__ == "__main__":
     daan_frame = create_instance_dataset(df)
 
     training_set, test_set = split_dataset_by_person(df)
-    # print(daan_frame)
+    print(daan_frame[0])
     # box_plot_id(df)
-    # box_plot_variable(df)
+    box_plot_variable(df)
     # thing(df)
     # print(training_set[0][1].info())
     # print(training_set[0][1].head())
