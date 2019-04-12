@@ -1,11 +1,12 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+import argparse
 import pickle
 from pathlib import Path
-import argparse
 from random import shuffle
+from typing import Tuple, Any
+
 from visualizations import *
+
+
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
     parse_dates = ['time']
@@ -157,7 +158,8 @@ def normalize_minutes(df):
 
     return df
 
-def create_instance_dataset(dataset):
+
+def create_instance_dataset(dataset) -> Tuple[Any, Any, pd.DataFrame, float]:
     n_days = 3
     instance_dataset = []
     for person in dataset.index.unique(level='id'):
