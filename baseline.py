@@ -5,6 +5,7 @@ import pickle
 from pathlib import Path
 import argparse
 from random import shuffle
+from ESN import try_ESN
 from visualizations import *
 def load_data(filename='dataset_mood_smartphone.csv'):
     types = {'id': str, 'time': str, 'variable': str, 'value': float}
@@ -208,6 +209,7 @@ if __name__ == "__main__":
 
     training_set, test_set = split_dataset_by_person(df)
 
+    try_ESN(training_set, test_set)
     # box_plot(df)
     # thing(df)
     # print(training_set[0][1].info())
