@@ -50,9 +50,9 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
 
     df = aggregate_into_days(df)
-    print(df.mood)
+
     df = reindex_to_days(df)
-    print(df.mood.plot)
+
     return df
 
 def calculate_baseline(df):
@@ -85,7 +85,9 @@ def interpolate_data(df):
     #    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
     #    'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
 
-    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
+    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance',
+                             'circumplex.valenceDeviance', 'circumplex.arousal',
+                             'circumplex.valence', 'activity']
 
     df['mood_interpolated'] = df['mood']
     to_interpolate_pad = ['mood_interpolated']
@@ -157,6 +159,36 @@ def normalize_minutes(df):
 
     return df
 
+def normalize_dataset(df):
+
+    non_time_variables = ['call', 'sms', 'activity',
+    'circumplex.arousal', 'circumplex.valence', 'mood', 'sms', 'moodDeviance',
+    'circumplex.arousalDeviance', 'circumplex.valenceDeviance', 'mood_interpolated']
+
+    for variable in non_time_variables:
+        # df[variable]=(df[variable]-df[variable].mean())/df[variable].std()
+        df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
+
+
+    time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
+    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    'appCat.unknown', 'appCat.utilities', 'appCat.weather']
+
+    for variable in time_variables:
+        df[variable]=(df[variable]-df[variable].mean())
+    return df
+
+def remove_wrong_data(df):
+    time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
+    'appCat.entertainment', 'appCat.finance', 'appCat.game',
+    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',
+    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call', 'sms']
+
+    for variable in time_variables:
+        df[variable][df[variable] < 0] = 0
+    return df
+
 def create_instance_dataset(dataset):
     n_days = 3
     instance_dataset = []
@@ -195,6 +227,8 @@ if __name__ == "__main__":
         df = interpolate_data(df)
         df = add_time_features(df)
         df = normalize_minutes(df)
+        df = remove_wrong_data(df)
+        df = normalize_dataset(df)
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
         print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
@@ -204,14 +238,15 @@ if __name__ == "__main__":
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
     calculate_baseline(df)
-    # daan_frame = create_instance_dataset(df)
+    daan_frame = create_instance_dataset(df)
 
     training_set, test_set = split_dataset_by_person(df)
-
-    # box_plot(df)
+    # print(daan_frame)
+    # box_plot_id(df)
+    # box_plot_variable(df)
     # thing(df)
     # print(training_set[0][1].info())
     # print(training_set[0][1].head())
 
     # correlation_matrix(df)
-    scatter_matrix_plot(df)
+    # scatter_matrix_plot(df)
