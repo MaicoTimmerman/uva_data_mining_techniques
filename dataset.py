@@ -1,5 +1,6 @@
 import pickle
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import torch.utils.data as data
@@ -33,6 +34,13 @@ class InstanceDataset(data.Dataset):
             return rv
 
         return list(filter(thefilter, df))
+
+    def get_train_test_split(self, train_percentage) \
+            -> Tuple[data.Dataset, data.Dataset]:
+        train_size = int(train_percentage * len(self))
+        test_size = len(self) - train_size
+        return data.random_split(self, [train_size, test_size])
+
 
 
 if __name__ == '__main__':
