@@ -28,6 +28,8 @@ def correlation_matrix(df):
     plt.show()
 
 def box_plot_variable(df):
+
+    df.drop(columns ='mood', inplace=True)
     ax = df.boxplot()
 
     labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
@@ -69,10 +71,12 @@ def box_plot_id(df):
 
 
 def thing(df):
-    df.hist()
-    # plt.axis('image')
-    # plt.tight_layout()
-    # plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-    # plt.tight_layout(pad = 1)
-    # plt.rcParams.update({'font.size': 2})
+
+    length = df.shape[1]
+    # print(df.iloc[:,:int(length)])
+
+    df.iloc[:,int(length/2):].hist()
+    df.iloc[:,2].hist()
+    plt.figure(1, figsize=(20, 20))
+
     plt.show()
