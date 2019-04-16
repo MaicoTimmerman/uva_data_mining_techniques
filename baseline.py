@@ -4,7 +4,7 @@ from pathlib import Path
 from random import shuffle
 from typing import Tuple, Any
 
-from ESN import try_ESN
+from ESN import try_ESN, try_ESN_single
 from visualizations import *
 
 
@@ -207,6 +207,11 @@ def create_instance_dataset(dataset) -> Tuple[Any, Any, pd.DataFrame, float]:
             instance_dataset.append((person, target_day, interval.drop(labels='mood'), target))
     return instance_dataset
 
+def remove_before_first_target (df):
+    # df_no_mood = df.loc[:, df.columns != 'mood']
+    # thing = df_no_mood.dropna()
+    # thing['mood'] = df
+    return df.dropna(subset=df.columns.drop('mood'))
 
 def split_dataset_by_person (dataset, test_fraction=0.2):
     ding = df.groupby(level='id')
@@ -233,6 +238,7 @@ if __name__ == "__main__":
         df = normalize_minutes(df)
         df = remove_wrong_data(df)
         df = normalize_dataset(df)
+        df = remove_before_first_target(df)
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
         print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
