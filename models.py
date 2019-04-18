@@ -1,3 +1,4 @@
+import csv
 import math
 import time
 
@@ -8,6 +9,15 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from dataset import InstanceDataset
+
+seed = int(time.time())
+torch.manual_seed(seed)
+
+
+def write_run(seed, epoch, value):
+    with open("mlp_results.csv", "a+") as f:
+        writer = csv.writer(f)
+        writer.writerow([seed, epoch, value])
 
 
 class MLP(nn.Module):
@@ -85,6 +95,7 @@ def train():
                 test_loss = math.sqrt(sum(test_losses) / len(test_losses))
                 print(f"[Epoch {epoch:02d}] "
                       f"test loss {test_loss:03f} ")
+                write_run(seed=seed, epoch=epoch, value=test_loss)
         if epoch % 40 == 0:
             torch.save(model.state_dict(),
                        "mlp_epoch{}.pt".format(epoch))
@@ -98,4 +109,6 @@ def train():
 
 
 if __name__ == '__main__':
-    train()
+    for i in range(30):
+        seed = int(time.time())
+        train()
