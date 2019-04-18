@@ -16,46 +16,41 @@ def load_data(filename='dataset_mood_smartphone.csv'):
 
     df = pd.pivot_table(df, index=['id', 'time'], columns='variable', values='value')
 
-    def aggregate_into_days(df):
-        to_mean_list = ["mood", "circumplex.arousal", "circumplex.valence", "activity"]
-
-        level_values = df.index.get_level_values
-        d = df.groupby([level_values(i) for i in [0]]
-                              +[pd.Grouper(freq='D', level=-1)])
-
-        summed = (d.agg('sum', axis=1))
-        meaned = (d.apply(lambda x: x.mean()))
-
-        # for to_mean in to_mean_list:
-        #     summed[to_mean] = meaned[to_mean]
-        summed[to_mean_list] = meaned[to_mean_list]
-        return summed
-
-    def reindex_to_days(df):
-
-        date_range = pd.date_range(
-            start="2014-02-17",
-            end="2014-06-9",
-            freq='D'
-            )
-
-        unique_id = df.index.unique(level='id')
-
-        blank_dataframe = (
-            pd.MultiIndex
-            .from_product(
-                iterables=[unique_id, date_range],
-                names=['id', 'time']
-            )
-        )
-        return df.reindex(blank_dataframe)
-
-
-    df = aggregate_into_days(df)
-
-    df = reindex_to_days(df)
-
     return df
+
+def aggregate_into_days(df):
+    to_mean_list = ["mood", "circumplex.arousal", "circumplex.valence", "activity"]
+
+    level_values = df.index.get_level_values
+    d = df.groupby([level_values(i) for i in [0]]
+                          +[pd.Grouper(freq='D', level=-1)])
+
+    summed = (d.agg('sum', axis=1))
+    meaned = (d.apply(lambda x: x.mean()))
+
+    # for to_mean in to_mean_list:
+    #     summed[to_mean] = meaned[to_mean]
+    summed[to_mean_list] = meaned[to_mean_list]
+    return summed
+
+def reindex_to_days(df):
+
+    date_range = pd.date_range(
+        start="2014-02-17",
+        end="2014-06-9",
+        freq='D'
+        )
+
+    unique_id = df.index.unique(level='id')
+
+    blank_dataframe = (
+        pd.MultiIndex
+        .from_product(
+            iterables=[unique_id, date_range],
+            names=['id', 'time']
+        )
+    )
+    return df.reindex(blank_dataframe)
 
 def calculate_baseline(df):
 
@@ -178,7 +173,8 @@ def normalize_dataset(df):
     'appCat.unknown', 'appCat.utilities', 'appCat.weather']
 
     for variable in time_variables:
-        df[variable]=(df[variable]-df[variable].mean())
+        # df[variable]=(df[variable]-df[variable].mean())
+        df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
     return df
 
 def remove_wrong_data(df):
@@ -230,12 +226,14 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         print('Loading and preprocessing data.')
-        df = load_data()
+        df = load_data('dataset_mood_smartphone.csv')
+        df = aggregate_into_days(df)
+        df = reindex_to_days(df)
         df = replace_nans_with_zeros(df)
         df = calculate_deviance(df)
         df = interpolate_data(df)
         df = add_time_features(df)
-        df = normalize_minutes(df)
+        # df = normalize_minutes(df)
         df = remove_wrong_data(df)
         df = normalize_dataset(df)
         df = remove_before_first_target(df)
@@ -248,16 +246,17 @@ if __name__ == "__main__":
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
     calculate_baseline(df)
-    daan_frame = create_instance_dataset(df)
+    # daan_frame = create_instance_dataset(df)
 
-    training_set, test_set = split_dataset_by_person(df)
-    print(daan_frame[0])
+    # training_set, test_set = split_dataset_by_person(df)
+    # print(daan_frame[0])
     # box_plot_id(df)
     box_plot_variable(df)
 
     try_ESN(training_set, test_set)
     # box_plot(df)
     # thing(df)
+    scatterplot_mood(df)
     # print(training_set[0][1].info())
     # print(training_set[0][1].head())
 

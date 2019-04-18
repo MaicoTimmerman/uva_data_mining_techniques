@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import math
 
 def correlation_matrix(df):
     # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html#sphx-glr-gallery-images-contours-and-fields-image-annotated-heatmap-py
@@ -80,3 +81,45 @@ def thing(df):
     plt.figure(1, figsize=(20, 20))
 
     plt.show()
+
+def scatterplot_mood(df):
+
+    # df = df.loc[('AS14.01', slice(None)), :]
+
+    y = 'mood'
+    # y = 'mood_interpolated'
+
+    to_drop = ['SUMMER', 'SPRING', 'SUMMER', 'moodDeviance',
+                'circumplex.arousalDeviance', 'circumplex.valenceDeviance']
+
+    df.drop(columns = to_drop, inplace=True)
+
+    rows = 4
+    columns = math.ceil((len(df.columns.values)-1)/rows)
+
+
+    for index, id in enumerate(df.index.unique(level='id')):
+        plt.figure(index, figsize = (20,20))
+        dfplot = df.loc[([id], slice(None)), :]
+        column = 0
+        fig, axes = plt.subplots(rows, columns, sharey='row')
+        for i, variable in enumerate(df.columns.values[:-1]):
+
+            row = i % rows
+            column = i // rows
+
+            sns.regplot(x=variable, y=y, data=dfplot, fit_reg=True, ax=axes[row, column])
+            axes[row, column].set_title(axes[row, column].get_xlabel().split(".")[-1])
+            axes[row, column].set_xlabel('')
+            # axes[row, column].set_xlim(left=-1, right=1)
+            # plt.setp(axes[row, column].get_xticklabels(), visible=False)
+            plt.setp(axes[row, column].get_yticklabels(), visible=False)
+
+            if not (column == 0):
+                axes[row, column].set_ylabel('')
+
+        fig.tight_layout(pad=0.4, w_pad=0.5)
+        fig.suptitle(id)
+        fname = './figures/' + id + '.png'
+        plt.savefig(fname, format='png')
+        plt.close()
