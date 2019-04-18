@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 
-def try_ESN (training_set, test_set, mood_mean, mood_min, mood_max):
+def try_ESN (training_set, test_set, n_hidden, mood_mean, mood_min, mood_max, mood_var):
 
     # prepare target matrix for offline training
     seq_lengths = [len(data) for thing, data in training_set]
@@ -19,13 +19,19 @@ def try_ESN (training_set, test_set, mood_mean, mood_min, mood_max):
     flat_target = prepare_target(training_targets, seq_lengths, washouts, batch_first=True)
 
     input_size = training_set[0][1].shape[1] - 1
-    n_hidden = 10
+    # n_hidden = 100
     n_output = 1
-    model = ESN(input_size, n_hidden, n_output, readout_training='cholesky', batch_first=True)
+    num_layers = 1
+    model = ESN(input_size, n_hidden, n_output,
+                readout_training='cholesky',
+                batch_first=True,
+                nonlinearity='tanh',
+                num_layers=num_layers,
+                spectral_radius=0.9)
 
     # accumulate matrices for ridge regression
     # training_array = torch.tensor(np.array([time_series.values for person_id, time_series in training_set]), dtype=torch.long)
-    hidden = torch.tensor(np.random.rand(1, 1, n_hidden), dtype=torch.float)
+    hidden = torch.tensor(np.random.rand(num_layers, 1, n_hidden), dtype=torch.float) * 0.0
     for person_id, time_series in training_set:
         input = torch.tensor(time_series.drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
         # washout = 5
@@ -35,31 +41,31 @@ def try_ESN (training_set, test_set, mood_mean, mood_min, mood_max):
     # train
     model.fit()
 
-    def get_RMSE (set, mood_mean, mood_min, mood_max):
+    def get_RMSE (set, mood_mean, mood_min, mood_max, mood_var):
         E = np.array([0])
         for i in range(len(set)):
             # Do inference
             washout_length = 5
-            df = set[i][1]
-            input = torch.tensor(df.drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
+            df2 = set[i][1]
+            input = torch.tensor(df2.drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
             output, _ = model(input, torch.tensor(np.array([washout_length])), hidden)
 
             # Calculate E
             predictions = output.detach().numpy().squeeze()
-            predictions = predictions * (mood_max-mood_min) + mood_mean
-            targets = df['mood_interpolated'].values[washout_length:]
-            targets = targets * (mood_max-mood_min) + mood_mean
-            true_targets = df['mood'].values[washout_length:]
+            predictions = predictions * mood_var + mood_mean
+            targets = df2['mood_interpolated'].values[washout_length:]
+            targets = targets * mood_var + mood_mean
+            true_targets = df2['mood'].values[washout_length:]
             errors = predictions - targets
             # Select only errors where true target exists
             errors = errors[~np.isnan(true_targets)]
             E = np.append(E, errors, axis=0)
 
-        draw_plot = False
+        draw_plot = True
         if draw_plot:
             import matplotlib.pyplot as plt
             plt.figure(i)
-            plt.title("training set example")
+            plt.title("example from set with length " + str(len(set)))
             plt.plot(targets, label='target')
             plt.plot(predictions, label='prediction')
             plt.legend()
@@ -73,7 +79,10 @@ def try_ESN (training_set, test_set, mood_mean, mood_min, mood_max):
         return RMSE
 
     # inference training set
-    print(f"ESN RMSE training set: {get_RMSE(training_set, mood_mean, mood_min, mood_max)}")
-    print(f"ESN RMSE test set: {get_RMSE(test_set, mood_mean, mood_min, mood_max)}")
+    training_RMSE = get_RMSE(training_set, mood_mean, mood_min, mood_max, mood_var)
+    test_RMSE = get_RMSE(test_set, mood_mean, mood_min, mood_max, mood_var)
+
+    return training_RMSE, test_RMSE
+
 
 

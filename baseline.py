@@ -163,8 +163,8 @@ def normalize_dataset(df):
     'circumplex.arousalDeviance', 'circumplex.valenceDeviance', 'mood_interpolated']
 
     for variable in non_time_variables:
-        # df[variable]=(df[variable]-df[variable].mean())/df[variable].std()
-        df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
+        df[variable]=(df[variable]-df[variable].mean())/df[variable].var()
+        # df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
 
 
     time_variables = ['screen', 'appCat.builtin', 'appCat.communication',
@@ -173,8 +173,8 @@ def normalize_dataset(df):
     'appCat.unknown', 'appCat.utilities', 'appCat.weather']
 
     for variable in time_variables:
-        # df[variable]=(df[variable]-df[variable].mean())
-        df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
+        df[variable]=(df[variable]-df[variable].mean())/df[variable].var()
+        # df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
     return df
 
 def remove_wrong_data(df):
@@ -215,7 +215,7 @@ def remove_before_first_target (df):
     return df.dropna(subset=df.columns.drop('mood'))
 
 def split_dataset_by_person (dataset, test_fraction=0.2):
-    ding = df.groupby(level='id')
+    ding = dataset.groupby(level='id')
     split = [(id, new_df) for id, new_df in ding]
     shuffle(split)
     splitpoint = int(len(split) * (1-test_fraction))
@@ -224,6 +224,14 @@ def split_dataset_by_person (dataset, test_fraction=0.2):
     return training_set, test_set
 
 if __name__ == "__main__":
+    base_seed = 47524
+    import numpy as np
+    import torch
+    import random
+    np.random.seed(base_seed)
+    torch.manual_seed(base_seed)
+    random.seed(base_seed)
+
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
     parser.add_argument('--force_preprocess', action='store_true')
     args = parser.parse_args()
@@ -253,17 +261,62 @@ if __name__ == "__main__":
 
     calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
-
-    training_set, test_set = split_dataset_by_person(df)
     # print(daan_frame[0])
     # box_plot_id(df)
     # box_plot_variable(df)
 
-    mean, min, max = df['mood'].mean(), df['mood'].min(), df['mood'].max()
-    try_ESN(training_set, test_set, mean, min, max)
+    n_random_tests = 100
+    training_RMSE_values = []
+    test_RMSE_values = []
+    n_hiddens = [1, 2, 5, 10, 20, 50, 100, 200]
+    for random_i in range(n_random_tests):
+        print(f"Randomly seeded run {random_i+1}/{n_random_tests}")
+        np.random.seed(base_seed + random_i)
+        torch.manual_seed(base_seed + random_i)
+        random.seed(base_seed + random_i)
+        mood_mean, mood_min, mood_max, mood_var = df['mood'].mean(), df['mood'].min(), df['mood'].max(), df['mood'].var()
+        training_set, test_set = split_dataset_by_person(df)
+
+        training_RMSE_values.append([])
+        test_RMSE_values.append([])
+        training_RMSE_values[random_i] = []
+        test_RMSE_values[random_i] = []
+        for n in n_hiddens:
+            training_RMSE, test_RMSE = try_ESN(training_set, test_set, n, mood_mean, mood_min, mood_max, mood_var)
+            training_RMSE_values[random_i].append(training_RMSE)
+            test_RMSE_values[random_i].append(test_RMSE)
+            # print(f"ESN ({n}) RMSE training set: {training_RMSE}")
+            # print(f"ESN ({n}) RMSE test set: {test_RMSE}")
+
+    np.savetxt(f"ESN_{n_random_tests}_runs_training_RMSE.csv", training_RMSE_values, delimiter=";")
+    np.savetxt(f"ESN_{n_random_tests}_runs_test_RMSE.csv", test_RMSE_values, delimiter=";")
+
+    avg_training_RMSE_per_size = np.array(training_RMSE_values).mean(axis=0)
+    avg_test_RMSE_per_size = np.array(test_RMSE_values).mean(axis=0)
+    best_training_RMSE = avg_training_RMSE_per_size.min()
+    best_training_size = n_hiddens[avg_training_RMSE_per_size.argmin()]
+    best_test_RMSE = avg_test_RMSE_per_size.min()
+    best_test_size = n_hiddens[avg_test_RMSE_per_size.argmin()]
+    print(f"Best model on training: size of {best_training_size} with RMSE of {best_training_RMSE}")
+    print(f"Best model on test: size of {best_test_size} with RMSE of {best_test_RMSE}")
+
+    import matplotlib.pyplot as plt
+    plt.figure(1)
+    plt.title(f"Echo state network ({n_random_tests} run average)")
+    plt.plot(n_hiddens, np.array(training_RMSE_values).mean(axis=0), marker='x', label='training error')
+    plt.plot(n_hiddens, np.array(test_RMSE_values).mean(axis=0), marker='x', label='test error')
+    plt.xscale('log')
+    plt.xlabel('Reservoir size (log)')
+    plt.yscale('log', nonposy='clip')
+    plt.ylabel('RMSE (log)')
+    ax = plt.gca()
+    # ax.set_ylim(top=1.1)
+    ax.set_yticks([0.7, 0.8, 1.0])
+    plt.legend()
+    plt.show(block=True)
     # box_plot(df)
     # thing(df)
-    scatterplot_mood(df)
+    # scatterplot_mood(df)
     # print(training_set[0][1].info())
     # print(training_set[0][1].head())
 

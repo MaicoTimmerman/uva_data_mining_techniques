@@ -1,0 +1,2 @@
+Best model on training: size of 1 with RMSE of 0.6595417412874349
+Best model on test: size of 1 with RMSE of 0.7083270874695667
