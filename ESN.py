@@ -35,29 +35,60 @@ def try_ESN (training_set, test_set):
     # train
     model.fit()
 
-    # inference training
-    input = torch.tensor(training_set[0][1].drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
-    output, hidden = model(input, torch.tensor(np.array([5])), hidden)
-    target = training_set[0][1]['mood_interpolated'].values
-    print(f"target: {target}\n output: {output}")
-    import matplotlib.pyplot as plt
-    plt.figure(10)
-    plt.title("training set example")
-    plt.plot(target.squeeze()[5:])
-    plt.plot(output.squeeze().detach().numpy())
-    plt.show(block=False)
+    def get_RMSE (set):
+        E = np.array([0])
+        for i in range(len(set)):
+            # Do inference
+            washout_length = 5
+            df = set[i][1]
+            input = torch.tensor(df.drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
+            output, _ = model(input, torch.tensor(np.array([washout_length])), hidden)
 
-    # inference test
-    input = torch.tensor(test_set[0][1].drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
-    output, hidden = model(input, torch.tensor(np.array([5])), hidden)
-    target = test_set[0][1]['mood_interpolated'].values
-    print(f"target: {target}\n output: {output}")
-    import matplotlib.pyplot as plt
-    plt.figure(11)
-    plt.title("test set example")
-    plt.plot(target.squeeze()[5:])
-    plt.plot(output.squeeze().detach().numpy())
-    plt.show(block=True)
+            # Calculate E
+            predictions = output.detach().numpy().squeeze()
+            targets = df['mood_interpolated'].values[washout_length:]
+            true_targets = df['mood'].values[washout_length:]
+            errors = predictions - targets
+            # Select only errors where true target exists
+            errors = errors[~np.isnan(true_targets)]
+            E = np.append(E, errors, axis=0)
+
+        # Calculate RMSE
+        SE = np.square(E)
+        MSE = np.mean(SE)
+        RMSE = np.sqrt(MSE)
+
+        return RMSE
+
+    # inference training set
+    print(f"RMSE training set: {get_RMSE(training_set)}")
+    print(f"RMSE test set: {get_RMSE(test_set)}")
+
+
+    draw_plot = False
+    if draw_plot:
+        # print(f"target: {target}\n output: {output}")
+        import matplotlib.pyplot as plt
+        plt.figure(i)
+        plt.title("training set example")
+        plt.plot(true_targets)
+        plt.plot(predictions)
+        plt.show(block=False)
+
+    # # inference test set
+    # input = torch.tensor(test_set[0][1].drop('mood', axis=1).values, dtype=torch.float).unsqueeze(0)
+    # output, hidden = model(input, torch.tensor(np.array([5])), hidden)
+    # target = test_set[0][1]['mood_interpolated'].values
+    # # print(f"target: {target}\n output: {output}")
+    # import matplotlib.pyplot as plt
+    # plt.figure(11)
+    # plt.title("test set example")
+    # plt.plot(target.squeeze()[5:])
+    # plt.plot(output.squeeze().detach().numpy())
+    # plt.show(block=True)
+
+    # Calculate RMSE for each true target
+    # true_targets =
 
 
 def try_ESN_single (training_set, test_set):
