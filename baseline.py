@@ -52,7 +52,8 @@ def reindex_to_days(df):
     )
     return df.reindex(blank_dataframe)
 
-def calculate_baseline(df):
+
+def calculate_baseline_previous_day(df):
 
     counter = 0
     loss = 0
@@ -63,7 +64,37 @@ def calculate_baseline(df):
                 loss += abs(previous_value - mood.mood.values[0])**2
                 counter += 1
             previous_value = mood.mood.values[0]
-    print("Average loss (RMSE) %3.9f over %d datapoints" % ((loss / counter)**.5, counter))
+    print("RMSE based on previous day: %3.9f over %d datapoints" % (
+        (loss / counter) ** .5, counter))
+
+
+def calculate_baseline_mean_global(df):
+    counter = 0
+    loss = 0
+
+    df = df[df["mood"].notnull()]
+    mean_mood = df["mood"].mean()
+
+    for row in df["mood"]:
+        loss += abs(row - mean_mood) ** 2
+        counter += 1
+
+    print("RMSE based on global average: %3.9f over %d datapoints" % (
+        (loss / counter) ** .5, counter))
+
+
+def calculate_baseline_mean_per_person(df):
+    counter = 0
+    loss = 0
+
+    df = df[df["mood"].notnull()]
+    for id, new_df in df.groupby(level="id"):
+        mean_mood = new_df["mood"].mean()
+        for row in new_df["mood"]:
+            loss += abs(row - mean_mood) ** 2
+            counter += 1
+    print("RMSE based on person average: %3.9f over %d datapoints" % (
+        (loss / counter) ** .5, counter))
 
 def replace_nans_with_zeros (df):
     to_fix = ['appCat.builtin', 'appCat.communication',
@@ -251,7 +282,9 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    calculate_baseline(df)
+    calculate_baseline_previous_day(df)
+    calculate_baseline_mean_global(df)
+    calculate_baseline_mean_per_person(df)
     # daan_frame = create_instance_dataset(df)
 
     training_set, test_set = split_dataset_by_person(df)
