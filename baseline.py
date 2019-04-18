@@ -187,6 +187,11 @@ def remove_wrong_data(df):
         df[variable][df[variable] < 0] = 0
     return df
 
+def remove_after_date(df, date='2014-05-5'):
+
+    # print(df.loc[(slice(None), pd.date_range(start='2014-02-17', end=date)), :])
+
+    return df.loc[(slice(None), pd.date_range(start='2014-02-17', end=date)), :]
 
 def create_instance_dataset(dataset) -> Tuple[Any, Any, pd.DataFrame, float]:
     n_days = 3
@@ -237,6 +242,7 @@ if __name__ == "__main__":
         df = remove_wrong_data(df)
         df = normalize_dataset(df)
         df = remove_before_first_target(df)
+        df = remove_after_date(df, date='2014-05-5')
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
         print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
@@ -251,9 +257,9 @@ if __name__ == "__main__":
     # training_set, test_set = split_dataset_by_person(df)
     # print(daan_frame[0])
     # box_plot_id(df)
-    box_plot_variable(df)
+    # box_plot_variable(df)
 
-    try_ESN(training_set, test_set)
+    # try_ESN(training_set, test_set)
     # box_plot(df)
     # thing(df)
     scatterplot_mood(df)

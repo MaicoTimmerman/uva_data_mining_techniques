@@ -98,7 +98,10 @@ def scatterplot_mood(df):
     columns = math.ceil((len(df.columns.values)-1)/rows)
 
 
-    for index, id in enumerate(df.index.unique(level='id')):
+    persons = ['AS14.33', 'AS14.30']
+    # persons = df.index.unique(level='id')
+
+    for index, id in enumerate(persons):
         plt.figure(index, figsize = (20,20))
         dfplot = df.loc[([id], slice(None)), :]
         column = 0
@@ -112,14 +115,15 @@ def scatterplot_mood(df):
             axes[row, column].set_title(axes[row, column].get_xlabel().split(".")[-1])
             axes[row, column].set_xlabel('')
             # axes[row, column].set_xlim(left=-1, right=1)
-            # plt.setp(axes[row, column].get_xticklabels(), visible=False)
+            plt.setp(axes[row, column].get_xticklabels(), visible=False)
             plt.setp(axes[row, column].get_yticklabels(), visible=False)
 
             if not (column == 0):
                 axes[row, column].set_ylabel('')
 
-        fig.tight_layout(pad=0.4, w_pad=0.5)
+        # fig.tight_layout(pad=0.4, w_pad=0.5)
         fig.suptitle(id)
         fname = './figures/' + id + '.png'
         plt.savefig(fname, format='png')
-        plt.close()
+        # plt.close('all')
+        plt.show()
