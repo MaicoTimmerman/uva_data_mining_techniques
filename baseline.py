@@ -248,7 +248,7 @@ if __name__ == "__main__":
     calculate_baseline(df)
     # daan_frame = create_instance_dataset(df)
 
-    # training_set, test_set = split_dataset_by_person(df)
+    training_set, test_set = split_dataset_by_person(df)
     # print(daan_frame[0])
     # box_plot_id(df)
     box_plot_variable(df)
