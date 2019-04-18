@@ -86,7 +86,8 @@ fig, subplot_axes
 for row in subplot_axes:
     for axe in row:
         bot, top = axe.get_ylim()
-        axe.vlines(0.745, bot, top, color='red',linestyles='dashed', label='Baseline')
+        # axe.vlines(0.745, bot, top, color='red',linestyles='dashed', label='Baseline')
+        axe.axvline(0.745, color='red', linestyle='--', label='Baseline')
         # axe.set_ylabel('Count')
         axe.set_xlabel('RMSE')
         axe.legend()
