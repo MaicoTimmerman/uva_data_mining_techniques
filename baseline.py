@@ -259,7 +259,8 @@ if __name__ == "__main__":
     # box_plot_id(df)
     # box_plot_variable(df)
 
-    try_ESN(training_set, test_set)
+    mean, min, max = df['mood'].mean(), df['mood'].min(), df['mood'].max()
+    try_ESN(training_set, test_set, mean, min, max)
     # box_plot(df)
     # thing(df)
     scatterplot_mood(df)

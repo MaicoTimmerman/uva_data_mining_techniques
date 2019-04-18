@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 
-def try_ESN (training_set, test_set):
+def try_ESN (training_set, test_set, mood_mean, mood_min, mood_max):
 
     # prepare target matrix for offline training
     seq_lengths = [len(data) for thing, data in training_set]
@@ -19,7 +19,7 @@ def try_ESN (training_set, test_set):
     flat_target = prepare_target(training_targets, seq_lengths, washouts, batch_first=True)
 
     input_size = training_set[0][1].shape[1] - 1
-    n_hidden = 100
+    n_hidden = 10
     n_output = 1
     model = ESN(input_size, n_hidden, n_output, readout_training='cholesky', batch_first=True)
 
@@ -35,7 +35,7 @@ def try_ESN (training_set, test_set):
     # train
     model.fit()
 
-    def get_RMSE (set):
+    def get_RMSE (set, mood_mean, mood_min, mood_max):
         E = np.array([0])
         for i in range(len(set)):
             # Do inference
@@ -46,12 +46,24 @@ def try_ESN (training_set, test_set):
 
             # Calculate E
             predictions = output.detach().numpy().squeeze()
+            predictions = predictions * (mood_max-mood_min) + mood_mean
             targets = df['mood_interpolated'].values[washout_length:]
+            targets = targets * (mood_max-mood_min) + mood_mean
             true_targets = df['mood'].values[washout_length:]
             errors = predictions - targets
             # Select only errors where true target exists
             errors = errors[~np.isnan(true_targets)]
             E = np.append(E, errors, axis=0)
+
+        draw_plot = False
+        if draw_plot:
+            import matplotlib.pyplot as plt
+            plt.figure(i)
+            plt.title("training set example")
+            plt.plot(targets, label='target')
+            plt.plot(predictions, label='prediction')
+            plt.legend()
+            plt.show(block=True)
 
         # Calculate RMSE
         SE = np.square(E)
@@ -61,16 +73,7 @@ def try_ESN (training_set, test_set):
         return RMSE
 
     # inference training set
-    print(f"ESN RMSE training set: {get_RMSE(training_set)}")
-    print(f"ESN RMSE test set: {get_RMSE(test_set)}")
+    print(f"ESN RMSE training set: {get_RMSE(training_set, mood_mean, mood_min, mood_max)}")
+    print(f"ESN RMSE test set: {get_RMSE(test_set, mood_mean, mood_min, mood_max)}")
 
 
-    draw_plot = False
-    if draw_plot:
-        # print(f"target: {target}\n output: {output}")
-        import matplotlib.pyplot as plt
-        plt.figure(i)
-        plt.title("training set example")
-        plt.plot(true_targets)
-        plt.plot(predictions)
-        plt.show(block=True)
