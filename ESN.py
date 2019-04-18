@@ -61,8 +61,8 @@ def try_ESN (training_set, test_set):
         return RMSE
 
     # inference training set
-    print(f"RMSE training set: {get_RMSE(training_set)}")
-    print(f"RMSE test set: {get_RMSE(test_set)}")
+    print(f"ESN RMSE training set: {get_RMSE(training_set)}")
+    print(f"ESN RMSE test set: {get_RMSE(test_set)}")
 
 
     draw_plot = False
