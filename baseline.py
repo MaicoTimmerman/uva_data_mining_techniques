@@ -4,7 +4,7 @@ from pathlib import Path
 from random import shuffle
 from typing import Tuple, Any
 
-from ESN import try_ESN, try_ESN_single
+from ESN import try_ESN
 from visualizations import *
 
 
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     # box_plot_id(df)
     # box_plot_variable(df)
 
-    # try_ESN(training_set, test_set)
+    try_ESN(training_set, test_set)
     # box_plot(df)
     # thing(df)
     scatterplot_mood(df)
