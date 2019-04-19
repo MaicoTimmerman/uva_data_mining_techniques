@@ -44,8 +44,9 @@ for i, N in enumerate(echo_state_N):
     column = i // len(subplot_axes)
 
     sns.set(color_codes=True)
-    sns.distplot(ESN_errors[:,i], label='ESN errors nodes = {}'.format(N), ax=subplot_axes[row,column])
-
+    sns.distplot(ESN_errors[:,i], label='ESN errors. Nodes = {}'.format(N), ax=subplot_axes[row,column])
+    label = 'Mean: {:.3f}'.format(ESN_descriptives.mean[i])
+    subplot_axes[row,column].axvline(ESN_descriptives.mean[i], color='blue', linestyle='--', label=label)
 
 
 MLP_errors = []
@@ -77,7 +78,8 @@ print("Descriptive statistics: n={:d}, Mean={:.3f}, Variance={:.3f}, Shapiro-P={
 
 # stats.probplot(MLP_errors, plot=plt)
 sns.distplot(MLP_errors, label='MLP errors',ax = subplot_axes[-1,-1])
-
+label = 'Mean: {:.3f}'.format(mlp_descriptives.mean)
+subplot_axes[-1,-1].axvline(mlp_descriptives.mean, color='blue', linestyle='--', label=label)
 # figure = plt.figure(1, clear=True)
 # plt.subplot(331)
 
@@ -86,8 +88,9 @@ fig, subplot_axes
 for row in subplot_axes:
     for axe in row:
         bot, top = axe.get_ylim()
-        # axe.vlines(0.745, bot, top, color='red',linestyles='dashed', label='Baseline')
-        axe.axvline(0.745, color='red', linestyle='--', label='Baseline')
+        # axe.vlines(BASELINE, bot, top, color='red',linestyles='dashed', label='Baseline')
+        label = 'Baseline: {:.3f}'.format(BASELINE)
+        axe.axvline(BASELINE, color='red', linestyle='--', label=label)
         # axe.set_ylabel('Count')
         axe.set_xlabel('RMSE')
         axe.legend()
