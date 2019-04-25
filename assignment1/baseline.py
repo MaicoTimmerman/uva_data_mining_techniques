@@ -112,12 +112,12 @@ def interpolate_data(df):
     #    'appCat.unknown', 'appCat.utilities', 'appCat.weather', 'call',
     #    'circumplex.arousal', 'circumplex.valence', 'screen', 'sms',]
 
-    to_interpolate_linear = ['moodDeviance', 'circumplex.arousalDeviance',
-                             'circumplex.valenceDeviance', 'circumplex.arousal',
-                             'circumplex.valence', 'activity']
+    to_interpolate_linear = ['activity']
 
     df['mood_interpolated'] = df['mood']
-    to_interpolate_pad = ['mood_interpolated']
+    to_interpolate_pad = ['mood_interpolated', 'moodDeviance', 'circumplex.arousalDeviance',
+                             'circumplex.valenceDeviance', 'circumplex.arousal',
+                             'circumplex.valence']
 
     for id in df.index.unique(level='id'):
         for variable in to_interpolate_linear:

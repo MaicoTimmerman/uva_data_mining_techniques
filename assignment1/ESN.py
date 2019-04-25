@@ -61,7 +61,7 @@ def try_ESN (training_set, test_set, n_hidden, mood_mean, mood_min, mood_max, mo
             errors = errors[~np.isnan(true_targets)]
             E = np.append(E, errors, axis=0)
 
-        draw_plot = True
+        draw_plot = False
         if draw_plot:
             import matplotlib.pyplot as plt
             plt.figure(i)
