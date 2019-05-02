@@ -37,7 +37,19 @@ def scatterplotter(df):
 
     plt.show()
 
+def showNaNs(df):
+    df.isna().sum().sort_values().plot(kind='bar', figsize=(20,20), logy=True)
+    plt.show()
 
 def correlation_matrixo(df):
     plt.matshow(df.corr())
+    plt.show()
+
+def show_country_clusters(df):
+
+    scatter_data = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
+    labels = df.groupby("prop_country_id").country_cluster.min()
+    scatter_data = pd.concat([scatter_data, labels], axis=1)
+
+    ax = scatter_data.plot(kind='scatter', x='mean', y='std', c='country_cluster', colormap='viridis')
     plt.show()

@@ -2,7 +2,8 @@ import pandas as pd
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
-from visualization import scatterplotter, correlation_matrixo
+from visualization import scatterplotter, correlation_matrixo, show_country_clusters, showNaNs
+from sklearn import cluster
 
 
 def load_the_datas(filename='tiny_train.csv'):
@@ -92,11 +93,11 @@ def average_competitors(df):
     return df
 
 def remove_nans(df):
-"""
-    removal of NaNs has to be different per column. For many we can simply
-    replace with -1. But for affinity score we set to 0 as all values are negative
-    for competitors we set to 0, because yea, no competition no problem
-"""
+    """
+        removal of NaNs has to be different per column. For many we can simply
+        replace with -1. But for affinity score we set to 0 as all values are negative
+        for competitors we set to 0, because yea, no competition no problem
+    """
 
     values = {  'visitor_hist_starrating': -1,
                 'visitor_hist_adr_usd': -1,
@@ -110,6 +111,25 @@ def remove_nans(df):
                 'comp_diff_avg': 0,}
     df.fillna(value=values,inplace=True)
     return df
+
+def cluster_countries(df, k=5):
+    """
+        We cluster the countries based on the mean and standard distribution of
+        each countries hotel prices.
+    """
+    # Convert DataFrame to matrix
+    mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']].values
+    # Using sklearn
+    km = cluster.KMeans(n_clusters=k)
+    km.fit(mat)
+    # Get cluster assignment labels
+    labels = km.labels_
+    # Format results as a DataFrame
+    results = pd.DataFrame([df.groupby("prop_country_id").price_usd.describe()[['mean','std']].index,labels]).T
+
+    df["country_cluster"] = results.set_index(0).loc[df.prop_country_id].values
+
+    return df
 if __name__ == "__main__":
 
     path = '../data/tiny_train.csv'
@@ -118,7 +138,12 @@ if __name__ == "__main__":
     df = add_seasons(df)
     df = average_competitors(df)
     df = remove_nans(df)
+    df = cluster_countries(df)
 
 
-    scatterplotter(df)
+
+
+    # VISUALS
+    # scatterplotter(df)
     # correlation_matrixo(df)
+    show_country_clusters(df)
