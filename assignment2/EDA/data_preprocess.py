@@ -8,8 +8,8 @@ from visualization import scatterplotter, correlation_matrixo
 def load_the_datas(filename='tiny_train.csv'):
     types = {'srch_id': int,
              'site_id': int,
-             'click_bool': bool,
-             'booking_bool': bool,
+             'click_bool': int,
+             'booking_bool': int,
              'gross_booking_uds': float,
              'visitor_location_country_id': int,
              'visitor_hist_starrating': float,
@@ -30,10 +30,10 @@ def load_the_datas(filename='tiny_train.csv'):
              'srch_adults_count': int,
              'srch_children_count': int,
              'srch_room_count': int,
-             'srch_saturday_night_bool': bool,
+             'srch_saturday_night_bool': int,
              'srch_query_affinity_score': float,
              'orig_destination_distance': float,
-             'random_bool': bool,
+             'random_bool': int,
              'comp1_rate' : 'Int64',
              'comp1_inv': 'Int64',
              'comp1_rate_percent_diff': float,
@@ -91,8 +91,25 @@ def average_competitors(df):
     df.drop(all_comp_rates + all_comp_invs + all_comp_diff, axis=1).head()
     return df
 
+def remove_nans(df):
+"""
+    removal of NaNs has to be different per column. For many we can simply
+    replace with -1. But for affinity score we set to 0 as all values are negative
+    for competitors we set to 0, because yea, no competition no problem
+"""
 
-
+    values = {  'visitor_hist_starrating': -1,
+                'visitor_hist_adr_usd': -1,
+                'prop_review_score': -1,
+                'prop_location_score2': -1,
+                'srch_query_affinity_score': 0,
+                'orig_destination_distance': -1,
+                'gross_bookings_usd': -1,
+                'comp_rate_avg': 0,
+                'comp_inv_avg': 0,
+                'comp_diff_avg': 0,}
+    df.fillna(value=values,inplace=True)
+    return df
 if __name__ == "__main__":
 
     path = '../data/tiny_train.csv'
@@ -100,6 +117,8 @@ if __name__ == "__main__":
     df = load_the_datas(path)
     df = add_seasons(df)
     df = average_competitors(df)
+    df = remove_nans(df)
+
 
     scatterplotter(df)
     # correlation_matrixo(df)
