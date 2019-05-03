@@ -8,3 +8,4 @@ if __name__ == "__main__":
     print('(min, mean, max)')
     print(f"A search results in {clicks_per_search(dataset)} clicks.")
     print(f"A search results in {bookings_per_search(dataset)} bookings.")
+    print(f"A booking has {clicks_per_booking(dataset)} clicks.")
