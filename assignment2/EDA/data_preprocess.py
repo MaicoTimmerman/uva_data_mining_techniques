@@ -68,14 +68,14 @@ def load_the_datas(filename='tiny_train.csv'):
     return df
 
 def add_seasons(df):
+    df['time_of_check_in'] = df['date_time'] + df['srch_booking_window'].apply(lambda x: timedelta(x))
+    df['time_of_check_out'] = df['time_of_check_in'] + df['srch_length_of_stay'].apply(lambda x: timedelta(x))
+    df['day_of_year_check_in'] = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday)
 
-    df['srch_booking_window'] = df['srch_booking_window'].apply(lambda x: timedelta(days = x))
-    df['time_of_booking'] = df['date_time'] + df['srch_booking_window']
-
-    df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_booking).month.isin([3,4,5]), 1, 0)
-    df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_booking).month.isin([6,7,8]), 1, 0)
-    df['AUTUMN'] = np.where(pd.DatetimeIndex(df.time_of_booking).month.isin([9,10,11]), 1, 0)
-    df['WINTER'] = np.where(pd.DatetimeIndex(df.time_of_booking).month.isin([12,1,2]), 1, 0)
+    df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([3,4,5]), 1, 0)
+    df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([6,7,8]), 1, 0)
+    df['AUTUMN'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([9,10,11]), 1, 0)
+    df['WINTER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([12,1,2]), 1, 0)
 
     return df
 
