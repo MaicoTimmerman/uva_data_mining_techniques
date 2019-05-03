@@ -35,3 +35,8 @@ def count_visitor_countries (dataset):
 
 def count_destinations (dataset):
     return len(dataset['srch_destination_id'].unique())
+
+def count_countries_from_which_bookings_were_made (dataset):
+    df = dataset[['booking_bool', 'visitor_location_country_id']]
+    countries_from_which_bookings_were_made = df[df['booking_bool'] == True]['visitor_location_country_id'].unique()
+    return len(countries_from_which_bookings_were_made)

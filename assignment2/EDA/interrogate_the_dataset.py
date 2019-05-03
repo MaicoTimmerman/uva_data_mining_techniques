@@ -14,6 +14,7 @@ if __name__ == "__main__":
     n_hotel_countries = count_hotel_countries(dataset)
     n_visitor_countries = count_visitor_countries(dataset)
     n_destinations = count_destinations(dataset)
+    n_countries_from_which_bookings_were_made = count_countries_from_which_bookings_were_made(dataset)
 
     print('(min, mean, max)')
     print(f"A search results in {clicks_per_search} clicks.")
@@ -24,6 +25,7 @@ if __name__ == "__main__":
     print(f"There are {n_hotel_countries} different hotel countries.")
     print(f"There are {n_visitor_countries} different visitor countries.")
     print(f"There are {n_destinations} different search destinations.")
+    print(f"There are {n_countries_from_which_bookings_were_made} countries from which bookings were made.")
 
     does_ignored_search_exist = clicks_per_search[0] < 1
     does_plural_booking_exist = bookings_per_search[2] > 1
