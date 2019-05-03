@@ -61,8 +61,7 @@ def load_the_datas(filename='tiny_train.csv'):
              'comp8_rate_percent_diff': float}
 
     parse_dates = ['date_time']
-    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position', 'prop_id', 'click_bool',
-    'booking_bool'], parse_dates=parse_dates)
+    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position', 'prop_id'], parse_dates=parse_dates)
 
     df.sort_index(level=['srch_id', 'position'], inplace=True)
 
@@ -89,7 +88,7 @@ def average_competitors(df):
     df['comp_inv_avg'] = df[all_comp_invs].mean(axis=1)
     df['comp_diff_avg'] = df[all_comp_diff].mean(axis=1)
 
-    df.drop(all_comp_rates + all_comp_invs + all_comp_diff, axis=1).head()
+    df.drop(all_comp_rates + all_comp_invs + all_comp_diff, axis=1, inplace=True)
     return df
 
 def remove_nans(df):
@@ -112,16 +111,20 @@ def remove_nans(df):
     df.fillna(value=values,inplace=True)
     return df
 
-def cluster_countries(df, k=5):
+def cluster_hotel_countries(df, k=4):
     """
-        We cluster the countries based on the mean and standard distribution of
+        We cluster the hotels' countries based on the mean and standard distribution of
         each countries hotel prices.
+        Furthermore we add country_mean_price and country_std_price as new features
+
+        TODO: clusters are now valued between 0-k, but these should become one-hot
+        vectors.
     """
     # Convert DataFrame to matrix
-    mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']].values
+    mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
     # Using sklearn
     km = cluster.KMeans(n_clusters=k)
-    km.fit(mat)
+    km.fit(mat.values)
     # Get cluster assignment labels
     labels = km.labels_
     # Format results as a DataFrame
@@ -129,7 +132,31 @@ def cluster_countries(df, k=5):
 
     df["country_cluster"] = results.set_index(0).loc[df.prop_country_id].values
 
+    for one_hot_index in range(df["country_cluster"].max() + 1):
+        variable_name = "hotel_country_cluster_" + str(one_hot_index)
+        df[variable_name] = (df["country_cluster"] == one_hot_index).astype(int)
+
+    df["country_mean_price"] = mat.loc[df.prop_country_id]['mean'].values
+    df["country_std_price"] = mat.loc[df.prop_country_id]['std'].values
+
     return df
+
+def cluster_user_countries(df):
+    """
+        I want to cluster the users by their countries. I want to use a similar
+        approach to clustering hotels by country. Perhaps I want to aggregate
+        all users by country, and plot their spending.
+    """
+    mat = df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean','std']]
+
+    # print(mat, len(mat))
+    # print(df.visitor_location_country_id.unique(), len(df.visitor_location_country_id.unique()))
+
+    df["user_country_mean_spending"] = mat.loc[df.visitor_location_country_id]['mean'].values
+    df["user_country_std_spending"] = mat.loc[df.visitor_location_country_id]['std'].values
+
+    return df
+
 if __name__ == "__main__":
 
     path = '../data/tiny_train.csv'
@@ -138,10 +165,11 @@ if __name__ == "__main__":
     df = add_seasons(df)
     df = average_competitors(df)
     df = remove_nans(df)
-    df = cluster_countries(df)
+    df = cluster_hotel_countries(df)
+    df = cluster_user_countries(df)
 
-
-
+    print(df.columns)
+    showNaNs(df)
 
     # VISUALS
     # scatterplotter(df)
