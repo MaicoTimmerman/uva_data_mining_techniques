@@ -40,3 +40,8 @@ def count_countries_from_which_bookings_were_made (dataset):
     df = dataset[['booking_bool', 'visitor_location_country_id']]
     countries_from_which_bookings_were_made = df[df['booking_bool'] == True]['visitor_location_country_id'].unique()
     return len(countries_from_which_bookings_were_made)
+
+def count_random_bools (dataset):
+    df = dataset[['srch_id', 'random_bool']]
+    random_bools = [df2['random_bool'].iloc[0] for srch_id, df2 in df.groupby('srch_id')]
+    return sum(random_bools)
