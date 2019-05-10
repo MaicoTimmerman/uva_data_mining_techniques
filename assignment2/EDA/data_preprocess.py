@@ -219,7 +219,7 @@ if __name__ == "__main__":
     df = cluster_hotel_countries(df)
     df = cluster_user_countries(df)
 
-    if testing and no_cheat_sheet:
+    if training and no_cheat_sheet:
         cheat_sheet = create_cheats_sheet(df)
 
     df = property_id_hacking(df, cheat_sheet)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     # showNaNs(df)
     box_plot_variable(df)
     show_me_the_money(df)
-    do_you_like_pie(df)
+    # do_you_like_pie(df)
     # VISUALS
     # scatterplotter(df)
     # correlation_matrixo(df)

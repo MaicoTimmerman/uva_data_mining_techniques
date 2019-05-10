@@ -95,8 +95,8 @@ def show_me_the_money(df):
     plt.show()
 
 def do_you_like_pie(df):
-    # df.loc[df['booking_bool']].groupby("visitor_location_country_id").price_usd.describe()[['mean']].plot.pie(subplots=True)
+    df.loc[df['booking_bool']].groupby("visitor_location_country_id").price_usd.describe()[['mean']].plot.pie(subplots=True)
 
-    df.loc[df['visitor_hist_adr_usd'] > 0].groupby("visitor_location_country_id").visitor_hist_adr_usd.describe()[['mean']].plot.pie(subplots=True)
+    # df.loc[df['visitor_hist_adr_usd'] > 0].groupby("visitor_location_country_id").visitor_hist_adr_usd.describe()[['mean']].plot.pie(subplots=True)
 
     plt.show()
