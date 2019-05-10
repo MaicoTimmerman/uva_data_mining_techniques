@@ -2,9 +2,15 @@ import pandas as pd
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
-from visualization import scatterplotter, correlation_matrixo, show_country_clusters, showNaNs
 from sklearn import cluster
 
+from visualization import   scatterplotter, \
+                            correlation_matrixo, \
+                            show_country_clusters, \
+                            showNaNs, \
+                            box_plot_variable, \
+                            show_me_the_money, \
+                            do_you_like_pie
 
 def load_the_datas(filename='tiny_train.csv'):
     types = {'srch_id': int,
@@ -61,7 +67,7 @@ def load_the_datas(filename='tiny_train.csv'):
              'comp8_rate_percent_diff': float}
 
     parse_dates = ['date_time']
-    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position', 'prop_id'], parse_dates=parse_dates)
+    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position'], parse_dates=parse_dates)
 
     df.sort_index(level=['srch_id', 'position'], inplace=True)
 
@@ -154,10 +160,53 @@ def cluster_user_countries(df):
 
     df["user_country_mean_spending"] = mat.loc[df.visitor_location_country_id]['mean'].values
     df["user_country_std_spending"] = mat.loc[df.visitor_location_country_id]['std'].values
+    df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
+    return df
 
+def create_cheats_sheet(df):
+    """
+        We should only use non-shuffled data. Otherwise we would just be adding noise.
+    """
+    temp_df = df.reset_index()
+    # print(temp_df.shape)
+    temp_df = temp_df.loc[temp_df['random_bool'] == 0]
+    # print(temp_df.shape)
+
+    assert 'position' in temp_df.columns, ("Please use training data to create cheat sheet")
+    assert 'booking_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
+    # assert 'gross_booking_usd' in temp_df.columns, ("Please use training data to create cheat sheet")
+    assert 'click_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
+
+
+
+    booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
+    clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
+
+    cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
+    cheat_cheet.fillna({'std': 0}, inplace=True)
+
+    cheat_cheet['click_ratio'] = clicker_bools
+    cheat_cheet['book_ratio'] = booker_bools
+
+    return cheat_cheet
+
+def property_id_hacking(df, cheat_sheet):
+
+    df["hotel_position_mean"] = cheat_sheet.loc[df.prop_id]['mean'].values
+    df["hotel_position_std"] = cheat_sheet.loc[df.prop_id]['std'].values
+    df["hotel_clicked_ratio"] = cheat_sheet.loc[df.prop_id]['click_ratio'].values
+    df["hotel_booked_ratio"] = cheat_sheet.loc[df.prop_id]['book_ratio'].values
+
+    df.fillna({ 'hotel_position_mean': 40,
+                'hotel_position_std': 0,
+                'hotel_clicked_ratio': 0,
+                'hotel_booked_ratio': 0,}, inplace=True)
     return df
 
 if __name__ == "__main__":
+
+    training = True
+    no_cheat_sheet = True
 
     path = '../data/tiny_train.csv'
 
@@ -168,10 +217,18 @@ if __name__ == "__main__":
     df = cluster_hotel_countries(df)
     df = cluster_user_countries(df)
 
-    print(df.columns)
-    showNaNs(df)
+    if testing and no_cheat_sheet:
+        cheat_sheet = create_cheats_sheet(df)
 
+    df = property_id_hacking(df, cheat_sheet)
+
+    # showNaNs(df)
+    box_plot_variable(df)
+    show_me_the_money(df)
+    do_you_like_pie(df)
     # VISUALS
     # scatterplotter(df)
     # correlation_matrixo(df)
-    show_country_clusters(df)
+    # show_country_clusters(df)
+
+    print("done")

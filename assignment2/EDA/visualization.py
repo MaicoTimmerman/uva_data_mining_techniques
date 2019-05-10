@@ -38,7 +38,13 @@ def scatterplotter(df):
     plt.show()
 
 def showNaNs(df):
-    df.isna().sum().sort_values().plot(kind='bar', figsize=(20,20), logy=True)
+    ax = df.isna().sum().sort_values().plot(kind='bar', figsize=(20,20), logy=True)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+
+    # plt.tight_layout()
+    # plt.autoscale()
+    plt.gcf().subplots_adjust(bottom=0.2)
     plt.show()
 
 def correlation_matrixo(df):
@@ -52,4 +58,45 @@ def show_country_clusters(df):
     scatter_data = pd.concat([scatter_data, labels], axis=1)
 
     ax = scatter_data.plot(kind='scatter', x='mean', y='std', c='country_cluster', colormap='viridis')
+    plt.show()
+
+def box_plot_variable(df):
+
+    to_drop = ['prop_id', 'site_id', 'visitor_location_country_id', 'prop_country_id', 'orig_destination_distance',
+                'srch_destination_id']
+                # ,'srch_query_affinity_score', 'srch_saturday_night_bool']
+
+    df.drop(columns=to_drop, inplace=True)
+    ax = df.boxplot(showfliers=False, )
+
+    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
+    # labels.insert(0, "")
+
+    # labels = df.columns
+    # ax.set_xticks(np.arange(len(labels)))
+    # ax.set_xticklabels(labels)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+    # fig.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.2)
+    plt.show()
+
+def show_me_the_money(df):
+
+    df.groupby("booking_bool").price_usd.plot.hist(logy=True, sharex=True, sharey=True, range=(0,3000), bins=20)
+    # pd.DataFrame.hist(  data=df, column='price_usd', by='booking_bool',
+    #                     log=True, stacked=True, sharex=True, sharey=True)
+    L=plt.legend()
+    L.get_texts()[0].set_text('No booking')
+    L.get_texts()[1].set_text('Booking')
+    plt.title("Price of hotels seperated by booking")
+    plt.xlabel("price_usd")
+    plt.ylabel("Count")
+    plt.show()
+
+def do_you_like_pie(df):
+    # df.loc[df['booking_bool']].groupby("visitor_location_country_id").price_usd.describe()[['mean']].plot.pie(subplots=True)
+
+    df.loc[df['visitor_hist_adr_usd'] > 0].groupby("visitor_location_country_id").visitor_hist_adr_usd.describe()[['mean']].plot.pie(subplots=True)
+
     plt.show()
