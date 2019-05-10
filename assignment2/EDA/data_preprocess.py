@@ -76,7 +76,9 @@ def load_the_datas(filename='tiny_train.csv'):
 def add_seasons(df):
     df['time_of_check_in'] = df['date_time'] + df['srch_booking_window'].apply(lambda x: timedelta(x))
     df['time_of_check_out'] = df['time_of_check_in'] + df['srch_length_of_stay'].apply(lambda x: timedelta(x))
-    df['day_of_year_check_in'] = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday)
+    check_ins = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday) / 365
+    df['sin_day_of_year_check_in'] = np.sin(2*np.pi*check_ins)
+    df['cos_day_of_year_check_in'] = np.cos(2*np.pi*check_ins)
 
     df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([3,4,5]), 1, 0)
     df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([6,7,8]), 1, 0)
