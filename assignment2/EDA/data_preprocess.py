@@ -211,36 +211,52 @@ def property_id_hacking(df, cheat_sheet):
 
 def outlier_killer(df):
     q = df["price_usd"].quantile(0.99)
-
+    # q = 4000
     return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
 
-def normalizer(df):
+def normalizer(df, normalize=True):
+
+    things_to_normalize = []
+
+    if normalize:
+        # normalize with unit gaussian centered
+
+        for variable in non_time_variables:
+            df[variable]=(df[variable]-df[variable].mean())/df[variable].var()
+
+    else:
+        # scale between []-1, 1]
+
+        for variable in non_time_variables:
+            df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
 
     return df
 
 if __name__ == "__main__":
 
-
-    path = '../data/tenth_train.csv'
+    path = '../data/tiny_train.csv'
+    # path = '../data/tenth_train.csv'
 
     df = load_the_datas(path)
-    df = outlier_killer(df)
+    # df = outlier_killer(df)
     df = add_seasons(df)
-    # df = average_competitors(df)
+    df = average_competitors(df)
     df = remove_nans(df)
-    # df = cluster_hotel_countries(df)
-    # df = cluster_user_countries(df)
+    df = cluster_hotel_countries(df)
+    df = cluster_user_countries(df)
 
-    # if training and no_cheat_sheet:
-    #     cheat_sheet = create_cheats_sheet(df)
+    cheat_sheet = create_cheats_sheet(df)
     #
-    # df = property_id_hacking(df, cheat_sheet)
+    df = property_id_hacking(df, cheat_sheet)
 
+
+    # VISUALS
+
+    print(df.columns)
     # showNaNs(df)
-    # box_plot_variable(df)
+    box_plot_variable(df)
     # show_me_the_money(df)
     # do_you_like_pie(df)
-    # VISUALS
     # scatterplotter(df) # VERY HEAVY DO NOT RUN
     # correlation_matrixo(df)
     # show_country_clusters(df)
