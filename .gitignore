@@ -8,3 +8,8 @@ assignment2/data/training_set_VU_DM\.csv
 \.idea/
 
 assignment2/venv/
+assignment2/data/tenth_test\.csv
+
+assignment2/data/tenth_train\.csv
+
+assignment2/data/tenth_valid\.csv
