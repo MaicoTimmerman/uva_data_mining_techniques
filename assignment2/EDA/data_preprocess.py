@@ -3,6 +3,9 @@ from datetime import datetime
 from datetime import timedelta
 import numpy as np
 from sklearn import cluster
+import argparse
+import pickle
+from pathlib import Path
 
 from visualization import   scatterplotter, \
                             correlation_matrixo, \
@@ -223,18 +226,33 @@ if __name__ == "__main__":
 
     path = '../data/tenth_train.csv'
 
-    df = load_the_datas(path)
-    df = outlier_killer(df)
-    df = add_seasons(df)
-    # df = average_competitors(df)
-    df = remove_nans(df)
-    # df = cluster_hotel_countries(df)
-    # df = cluster_user_countries(df)
+    parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
+    parser.add_argument('--force_preprocess', action='store_true')
+    args = parser.parse_args()
 
-    # if training and no_cheat_sheet:
-    #     cheat_sheet = create_cheats_sheet(df)
-    #
-    # df = property_id_hacking(df, cheat_sheet)
+    preprocessed_dataset_file = Path("preprocessed_data.pkl")
+    if not preprocessed_dataset_file.exists() or args.force_preprocess:
+        df = load_the_datas(path)
+        df = outlier_killer(df)
+        df = add_seasons(df)
+        # df = average_competitors(df)
+        df = remove_nans(df)
+        # df = cluster_hotel_countries(df)
+        # df = cluster_user_countries(df)
+
+        # if training and no_cheat_sheet:
+        #     cheat_sheet = create_cheats_sheet(df)
+        #
+        # df = property_id_hacking(df, cheat_sheet)
+
+        file_stream = open(preprocessed_dataset_file, 'wb')
+        pickle.dump(df, file_stream)
+        print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
+    else:
+        file_stream = open(preprocessed_dataset_file, 'rb')
+        df = pickle.load(file_stream)
+        print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
+
 
     # showNaNs(df)
     # box_plot_variable(df)
