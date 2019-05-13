@@ -3,6 +3,9 @@ from datetime import datetime
 from datetime import timedelta
 import numpy as np
 from sklearn import cluster
+import argparse
+import pickle
+from pathlib import Path
 
 from visualization import   scatterplotter, \
                             correlation_matrixo, \
@@ -168,32 +171,6 @@ def cluster_user_countries(df):
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
     return df
 
-def create_cheats_sheet(df):
-    """
-        We should only use non-shuffled data. Otherwise we would just be adding noise.
-    """
-    temp_df = df.reset_index()
-    # print(temp_df.shape)
-    temp_df = temp_df.loc[temp_df['random_bool'] == 0]
-    # print(temp_df.shape)
-
-    assert 'position' in temp_df.columns, ("Please use training data to create cheat sheet")
-    assert 'booking_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
-    # assert 'gross_booking_usd' in temp_df.columns, ("Please use training data to create cheat sheet")
-    assert 'click_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
-
-
-
-    booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
-    clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
-
-    cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
-    cheat_cheet.fillna({'std': 0}, inplace=True)
-
-    cheat_cheet['click_ratio'] = clicker_bools
-    cheat_cheet['book_ratio'] = booker_bools
-
-    return cheat_cheet
 
 def property_id_hacking(df, cheat_sheet):
 
@@ -237,22 +214,38 @@ if __name__ == "__main__":
     path = '../data/tiny_train.csv'
     # path = '../data/tenth_train.csv'
 
-    df = load_the_datas(path)
-    # df = outlier_killer(df)
-    df = add_seasons(df)
-    df = average_competitors(df)
-    df = remove_nans(df)
-    df = cluster_hotel_countries(df)
-    df = cluster_user_countries(df)
+    path = '../data/tenth_train.csv'
 
-    cheat_sheet = create_cheats_sheet(df)
-    #
-    df = property_id_hacking(df, cheat_sheet)
+    parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
+    parser.add_argument('--force_preprocess', action='store_true')
+    args = parser.parse_args()
 
+    preprocessed_dataset_file = Path("preprocessed_data.pkl")
+    if not preprocessed_dataset_file.exists() or args.force_preprocess:
+        df = load_the_datas(path)
+        df = outlier_killer(df)
+        df = add_seasons(df)
+        # df = average_competitors(df)
+        df = remove_nans(df)
+        # df = cluster_hotel_countries(df)
+        # df = cluster_user_countries(df)
 
-    # VISUALS
+        # if training and no_cheat_sheet:
+        #     cheat_sheet = create_cheats_sheet(df)
+        #
+        # df = property_id_hacking(df, cheat_sheet)
 
-    print(df.columns)
+        file_stream = open(preprocessed_dataset_file, 'wb')
+        pickle.dump(df, file_stream)
+        print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
+    else:
+        file_stream = open(preprocessed_dataset_file, 'rb')
+        df = pickle.load(file_stream)
+        print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
+
+    file_stream = open('../data/cheat_sheet.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
+
     # showNaNs(df)
     box_plot_variable(df)
     # show_me_the_money(df)
