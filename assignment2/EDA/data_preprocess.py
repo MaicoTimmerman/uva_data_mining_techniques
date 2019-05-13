@@ -10,7 +10,10 @@ from visualization import   scatterplotter, \
                             showNaNs, \
                             box_plot_variable, \
                             show_me_the_money, \
-                            do_you_like_pie
+                            do_you_like_pie, \
+                            polar_graph
+
+"""XGboost?"""
 
 def load_the_datas(filename='tiny_train.csv'):
     types = {'srch_id': int,
@@ -205,32 +208,42 @@ def property_id_hacking(df, cheat_sheet):
                 'hotel_booked_ratio': 0,}, inplace=True)
     return df
 
+
+def outlier_killer(df):
+    q = df["price_usd"].quantile(0.99)
+
+    return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
+
+def normalizer(df):
+
+    return df
+
 if __name__ == "__main__":
 
-    training = True
-    no_cheat_sheet = True
 
-    path = '../data/tiny_train.csv'
+    path = '../data/tenth_train.csv'
 
     df = load_the_datas(path)
+    df = outlier_killer(df)
     df = add_seasons(df)
-    df = average_competitors(df)
+    # df = average_competitors(df)
     df = remove_nans(df)
-    df = cluster_hotel_countries(df)
-    df = cluster_user_countries(df)
+    # df = cluster_hotel_countries(df)
+    # df = cluster_user_countries(df)
 
-    if training and no_cheat_sheet:
-        cheat_sheet = create_cheats_sheet(df)
-
-    df = property_id_hacking(df, cheat_sheet)
+    # if training and no_cheat_sheet:
+    #     cheat_sheet = create_cheats_sheet(df)
+    #
+    # df = property_id_hacking(df, cheat_sheet)
 
     # showNaNs(df)
-    box_plot_variable(df)
-    show_me_the_money(df)
+    # box_plot_variable(df)
+    # show_me_the_money(df)
     # do_you_like_pie(df)
     # VISUALS
-    # scatterplotter(df)
+    # scatterplotter(df) # VERY HEAVY DO NOT RUN
     # correlation_matrixo(df)
     # show_country_clusters(df)
+    polar_graph(df)
 
     print("done")
