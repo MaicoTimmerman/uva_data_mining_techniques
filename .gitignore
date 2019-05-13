@@ -13,3 +13,5 @@ assignment2/data/tenth_test\.csv
 assignment2/data/tenth_train\.csv
 
 assignment2/data/tenth_valid\.csv
+
+*.pyc
