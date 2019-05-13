@@ -171,32 +171,6 @@ def cluster_user_countries(df):
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
     return df
 
-def create_cheats_sheet(df):
-    """
-        We should only use non-shuffled data. Otherwise we would just be adding noise.
-    """
-    temp_df = df.reset_index()
-    # print(temp_df.shape)
-    temp_df = temp_df.loc[temp_df['random_bool'] == 0]
-    # print(temp_df.shape)
-
-    assert 'position' in temp_df.columns, ("Please use training data to create cheat sheet")
-    assert 'booking_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
-    # assert 'gross_booking_usd' in temp_df.columns, ("Please use training data to create cheat sheet")
-    assert 'click_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
-
-
-
-    booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
-    clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
-
-    cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
-    cheat_cheet.fillna({'std': 0}, inplace=True)
-
-    cheat_cheet['click_ratio'] = clicker_bools
-    cheat_cheet['book_ratio'] = booker_bools
-
-    return cheat_cheet
 
 def property_id_hacking(df, cheat_sheet):
 
@@ -253,6 +227,8 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
+    file_stream = open('../data/cheat_sheet.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
 
     # showNaNs(df)
     # box_plot_variable(df)
