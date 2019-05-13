@@ -81,8 +81,8 @@ def create_cheats_sheet(df):
 
     booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
     clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
-
     cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
+
     cheat_cheet.fillna({'std': 0}, inplace=True)
 
     cheat_cheet['click_ratio'] = clicker_bools
@@ -96,4 +96,4 @@ path = 'training_set_VU_DM.csv'
 df = load_the_datas(path)
 cheat_sheet = create_cheats_sheet(df)
 file_stream = open('cheat_sheet.pkl', 'wb')
-pickle.dump(df, file_stream)
+pickle.dump(cheat_sheet, file_stream)
