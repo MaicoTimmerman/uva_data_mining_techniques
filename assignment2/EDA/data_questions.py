@@ -2,6 +2,11 @@
 def stats (x):
     return min(x), sum(x)/len(x), max(x)
 
+def count_hotels_per_search (dataset):
+    df = dataset[['srch_id', 'price_usd']]
+    hotels_per_search = [len(df2['price_usd']) for srch_id, df2 in df.groupby('srch_id')]
+    return stats(hotels_per_search)
+
 def count_clicks_per_search (dataset):
     df = dataset[['srch_id', 'click_bool']]
     clicks_per_search = [df2['click_bool'].sum() for srch_id, df2 in df.groupby('srch_id')]
