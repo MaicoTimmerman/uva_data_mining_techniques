@@ -112,6 +112,7 @@ def do_you_like_pie(df):
 def polar_graph(df):
 
     df = df[df['booking_bool'] == 1]
+    # df = df[df['country_cluster'] == 2]
 
     data_sum = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).sum()
     data_describe = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).describe()
@@ -193,4 +194,12 @@ def country_price_vagina_plots(df):
     #                     split=True)
     plt.title("Distribution of prices of booked hotels per country. Split on random bool")
 
+    plt.show()
+
+def position_bias(df):
+    df_1 = df[df['random_bool'] == 1]
+    df_2 = df[df['random_bool'] == 0]
+
+    print(df_1.columns)
+    df_1.plot.bar(x=df_1['hotel_position_mean'] , y=df_1.count())
     plt.show()

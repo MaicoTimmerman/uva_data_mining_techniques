@@ -63,7 +63,32 @@ def load_the_datas(filename='tiny_train.csv'):
 
     return df
 
-def create_cheats_sheet(df):
+def outlier_killer(df):
+    q = df["price_usd"].quantile(0.999)
+    # q = 4000
+    # return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
+    return df[(df["price_usd"] < q)]
+
+def visitor_location_country_id_cheat_sheet(df):
+    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean','std']]
+    # mat = df.loc[df['visitor_hist_adr_usd'] > 0].groupby("visitor_location_country_id").visitor_hist_adr_usd.describe()[['mean','std']]
+    cheat_cheet = cheat_cheet.fillna(0)
+
+    return cheat_cheet
+
+def site_id_cheat_sheet(df):
+    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("site_id").price_usd.describe()[['mean','std']]
+    cheat_cheet = cheat_cheet.fillna(0)
+
+    return cheat_cheet
+
+def srch_destination_id_cheat_sheet(df):
+    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("srch_destination_id").price_usd.describe()[['mean','std']]
+    cheat_cheet = cheat_cheet.fillna(0)
+
+    return cheat_cheet
+
+def prop_id_cheats_sheet(df):
     """
         We should only use non-shuffled data. Otherwise we would just be adding noise.
     """
@@ -77,23 +102,36 @@ def create_cheats_sheet(df):
     # assert 'gross_booking_usd' in temp_df.columns, ("Please use training data to create cheat sheet")
     assert 'click_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
 
-
-
     booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
     clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
     cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
 
-    cheat_cheet.fillna({'std': 0}, inplace=True)
+    cheat_cheet.fillna({'mean':0, 'std': 0}, inplace=True)
 
     cheat_cheet['click_ratio'] = clicker_bools
     cheat_cheet['book_ratio'] = booker_bools
 
     return cheat_cheet
 
+if __name__ == "__main__":
+    path = 'training_set_VU_DM.csv'
+    df = load_the_datas(path)
+    df = outlier_killer(df)
 
+    cheat_sheet = prop_id_cheats_sheet(df)
+    file_stream = open('cheat_sheet_prop_id.pkl', 'wb')
+    pickle.dump(cheat_sheet, file_stream)
 
-path = 'training_set_VU_DM.csv'
-df = load_the_datas(path)
-cheat_sheet = create_cheats_sheet(df)
-file_stream = open('cheat_sheet.pkl', 'wb')
-pickle.dump(cheat_sheet, file_stream)
+    cheat_sheet = visitor_location_country_id_cheat_sheet(df)
+    file_stream = open('cheat_sheet_visitor_location_country_id.pkl', 'wb')
+    pickle.dump(cheat_sheet, file_stream)
+
+    cheat_sheet = site_id_cheat_sheet(df)
+    file_stream = open('cheat_sheet_site_id.pkl', 'wb')
+    pickle.dump(cheat_sheet, file_stream)
+
+    cheat_sheet = srch_destination_id_cheat_sheet(df)
+    file_stream = open('cheat_sheet_srch_destination_id.pkl', 'wb')
+    pickle.dump(cheat_sheet, file_stream)
+
+    print("done")

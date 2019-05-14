@@ -15,8 +15,8 @@ from visualization import   scatterplotter, \
                             show_me_the_money, \
                             do_you_like_pie, \
                             polar_graph, \
-                            country_price_vagina_plots
-
+                            country_price_vagina_plots, \
+                            position_bias
 """XGboost?"""
 
 def load_the_datas(filename='tiny_train.csv'):
@@ -156,59 +156,40 @@ def cluster_hotel_countries(df, k=4):
 
     return df
 
-def cluster_user_countries(df):
+def id_hacking(df):
     """
-        I want to cluster the users by their countries. I want to use a similar
-        approach to clustering hotels by country. Perhaps I want to aggregate
-        all users by country, and plot their spending.
+        First make the cheat sheets with the create_cheat_sheet
+        Then you can load in the data
     """
-    mat = df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean','std']]
-    mat = mat.fillna(0)
-    # print(mat, len(mat))
-    # print(df.visitor_location_country_id.unique(), len(df.visitor_location_country_id.unique()))
 
-    df["user_country_mean_spending"] = mat.loc[df.visitor_location_country_id]['mean'].values
-    df["user_country_std_spending"] = mat.loc[df.visitor_location_country_id]['std'].values
-    df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
-    return df
-
-def cluster_site_id(df):
-    """
-        same shit for site_id
-    """
-    mat = df.loc[df['booking_bool'] == 1].groupby("site_id").price_usd.describe()[['mean','std']]
-    mat = mat.fillna(0)
-
-    df["site_id_mean"] = mat.loc[df.site_id]['mean'].values
-    df["site_id_std"] = mat.loc[df.site_id]['std'].values
-    df.fillna({'site_id_mean': 0, 'site_id_std': 0}, inplace=True)
-    return df
-
-def cluster_srch_destination_id(df):
-    """
-        same shit for srch_destination_id
-    """
-    mat = df.loc[df['booking_bool'] == 1].groupby("srch_destination_id").price_usd.describe()[['mean','std']]
-    mat = mat.fillna(0)
-
-    df["srch_destination_id_mean"] = mat.loc[df.srch_destination_id]['mean'].values
-    df["srch_destination_id_std"] = mat.loc[df.srch_destination_id]['std'].values
-    df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
-    return df
-
-def property_id_hacking(df):
-    file_stream = open('../data/cheat_sheet.pkl', 'rb')
+    file_stream = open('../data/cheat_sheet_prop_id.pkl', 'rb')
     cheat_sheet = pickle.load(file_stream)
-
     df["hotel_position_mean"] = cheat_sheet.loc[df.prop_id]['mean'].values
     df["hotel_position_std"] = cheat_sheet.loc[df.prop_id]['std'].values
     df["hotel_clicked_ratio"] = cheat_sheet.loc[df.prop_id]['click_ratio'].values
     df["hotel_booked_ratio"] = cheat_sheet.loc[df.prop_id]['book_ratio'].values
 
-    df.fillna({ 'hotel_position_mean': 40,
-                'hotel_position_std': 0,
-                'hotel_clicked_ratio': 0,
-                'hotel_booked_ratio': 0,}, inplace=True)
+    df.fillna({ 'hotel_position_mean': 40, 'hotel_position_std': 0,
+                'hotel_clicked_ratio': 0, 'hotel_booked_ratio': 0,}, inplace=True)
+
+    file_stream = open('../data/cheat_sheet_visitor_location_country_id.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
+    df["user_country_mean_spending"] = cheat_sheet.loc[df.visitor_location_country_id]['mean'].values
+    df["user_country_std_spending"] = cheat_sheet.loc[df.visitor_location_country_id]['std'].values
+    df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
+
+    file_stream = open('../data/cheat_sheet_site_id.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
+    df["site_id_mean"] = cheat_sheet.loc[df.site_id]['mean'].values
+    df["site_id_std"] = cheat_sheet.loc[df.site_id]['std'].values
+    df.fillna({'site_id_mean': 0, 'site_id_std': 0}, inplace=True)
+
+    file_stream = open('../data/cheat_sheet_srch_destination_id.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
+    df["srch_destination_id_mean"] = cheat_sheet.loc[df.srch_destination_id]['mean'].values
+    df["srch_destination_id_std"] = cheat_sheet.loc[df.srch_destination_id]['std'].values
+    df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
+
     return df
 
 def outlier_killer(df):
@@ -283,37 +264,33 @@ def count_nan_feature(df):
 
 def preprocess (df):
     df = count_nan_feature(df)
-    # show_me_the_money(df)
     df = outlier_killer(df)
-    # show_me_the_money(df)
     df = add_seasons(df)
     df = average_competitors(df)
     df = remove_nans(df)
     df = cluster_hotel_countries(df)
-    df = cluster_user_countries(df)
-    df = cluster_site_id(df)
-    df = cluster_srch_destination_id(df)
-    df = property_id_hacking(df)
+    df = id_hacking(df)
     # df = normalizer(df)
     df = balance_relevancies(df)
     return df
 
 def make_plots (df):
-    # showNaNs(df)
-    # box_plot_variable(df)
-    # show_me_the_money(df)
-    # do_you_like_pie(df)
-    # country_price_vagina_plots(df)
+    showNaNs(df)
+    box_plot_variable(df)
+    show_me_the_money(df)
+    do_you_like_pie(df)
+    country_price_vagina_plots(df)
     # scatterplotter(df) # VERY HEAVY DO NOT RUN
-    # correlation_matrixo(df)
+    correlation_matrixo(df)
     show_country_clusters(df)
     polar_graph(df)
+    # position_bias(df)
 
 if __name__ == "__main__":
     path = '../data/tiny_train.csv'
     # path = '../data/tenth_train.csv'
 
-    # path = '../data/tenth_train.csv'
+    path = '../data/tenth_train.csv'
 
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
     parser.add_argument('--force_preprocess', action='store_true')
