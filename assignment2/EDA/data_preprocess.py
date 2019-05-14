@@ -132,8 +132,6 @@ def cluster_hotel_countries(df, k=4):
         each countries hotel prices.
         Furthermore we add country_mean_price and country_std_price as new features
 
-        TODO: clusters are now valued between 0-k, but these should become one-hot
-        vectors.
     """
     # Convert DataFrame to matrix
     mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
