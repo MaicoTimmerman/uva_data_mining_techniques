@@ -192,7 +192,7 @@ def cluster_srch_destination_id(df):
     mat = mat.fillna(0)
 
     df["srch_destination_id_mean"] = mat.loc[df.srch_destination_id]['mean'].values
-    df["srch_destination_id_std"] = mat.loc[df.srch_destination]['std'].values
+    df["srch_destination_id_std"] = mat.loc[df.srch_destination_id]['std'].values
     df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
     return df
 
@@ -303,11 +303,11 @@ def make_plots (df):
     # box_plot_variable(df)
     # show_me_the_money(df)
     # do_you_like_pie(df)
-    country_price_vagina_plots(df)
+    # country_price_vagina_plots(df)
     # scatterplotter(df) # VERY HEAVY DO NOT RUN
     # correlation_matrixo(df)
-    # show_country_clusters(df)
-    # polar_graph(df)
+    show_country_clusters(df)
+    polar_graph(df)
 
 if __name__ == "__main__":
     path = '../data/tiny_train.csv'
