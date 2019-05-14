@@ -194,6 +194,34 @@ def outlier_killer(df):
     # return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
     return df[(df["price_usd"] < q)]
 
+def balance_relevancies_stupid (df):
+    df_copy = pd.DataFrame().reindex_like(df)
+    for srch_id, df2 in df.groupby('srch_id'):
+        for i, row in df2.iterrows():
+            if row['click_bool'] == 1 & row['booking_bool'] == 1:
+                df_copy[-1] = row
+                break
+
+        for i, row in df2.iterrows():
+            if row['click_bool'] == 1 & row['booking_bool'] == 0:
+                df_copy[-1] = row
+                break
+
+        for i, row in df2.iterrows():
+            if row['click_bool'] == 0 & row['booking_bool'] == 0:
+                df_copy[-1] = row
+                break
+
+    return df_copy
+
+def balance_relevancies (df):
+    # df.assign(srch_id2=df.index.get_level_values('srch_id'))
+    df = df.reset_index()
+    df = df.drop_duplicates(subset=['srch_id', 'click_bool', 'booking_bool'])
+    df = df.set_index(['srch_id', 'position'])
+    return df
+
+
 def normalizer(df, normalize=True):
 
     """
@@ -239,7 +267,7 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         df = load_the_datas(path)
-        # show_me_the_money(df)
+        df = balance_relevancies(df)
         df = outlier_killer(df)
         # show_me_the_money(df)
         df = add_seasons(df)

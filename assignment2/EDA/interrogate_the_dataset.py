@@ -3,9 +3,10 @@ from data_questions import *
 
 
 if __name__ == "__main__":
-    input_file = "../data/tiny_train.csv"
+    input_file = "../data/tenth_train.csv"
     dataset = pd.read_csv(input_file)
 
+    hotels_per_search = count_hotels_per_search(dataset)
     clicks_per_search = count_clicks_per_search(dataset)
     bookings_per_search = count_bookings_per_search(dataset)
     clicks_per_booking = count_clicks_per_booking(dataset)
@@ -18,6 +19,7 @@ if __name__ == "__main__":
     n_random_bools = count_random_bools(dataset)
 
     print('(min, mean, max)')
+    print(f"A search results in {hotels_per_search} hotels.")
     print(f"A search results in {clicks_per_search} clicks.")
     print(f"A search results in {bookings_per_search} bookings.")
     print(f"A booking has {clicks_per_booking} clicks.")
