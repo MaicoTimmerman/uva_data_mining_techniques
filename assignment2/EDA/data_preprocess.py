@@ -14,7 +14,8 @@ from visualization import   scatterplotter, \
                             box_plot_variable, \
                             show_me_the_money, \
                             do_you_like_pie, \
-                            polar_graph
+                            polar_graph, \
+                            country_price_vagina_plots
 
 """XGboost?"""
 
@@ -173,7 +174,6 @@ def cluster_user_countries(df):
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
     return df
 
-
 def property_id_hacking(df, cheat_sheet):
 
     df["hotel_position_mean"] = cheat_sheet.loc[df.prop_id]['mean'].values
@@ -186,7 +186,6 @@ def property_id_hacking(df, cheat_sheet):
                 'hotel_clicked_ratio': 0,
                 'hotel_booked_ratio': 0,}, inplace=True)
     return df
-
 
 def outlier_killer(df):
     q = df["price_usd"].quantile(0.999)
@@ -220,7 +219,6 @@ def balance_relevancies (df):
     df = df.drop_duplicates(subset=['srch_id', 'click_bool', 'booking_bool'])
     df = df.set_index(['srch_id', 'position'])
     return df
-
 
 def normalizer(df, normalize=True):
 
@@ -267,7 +265,7 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         df = load_the_datas(path)
-        df = balance_relevancies(df)
+        # show_me_the_money(df)
         df = outlier_killer(df)
         # show_me_the_money(df)
         df = add_seasons(df)
@@ -281,6 +279,7 @@ if __name__ == "__main__":
 
         df = property_id_hacking(df, cheat_sheet)
         # df = normalizer(df)
+        df = balance_relevancies(df)
 
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
@@ -293,13 +292,14 @@ if __name__ == "__main__":
     file_stream = open('../data/cheat_sheet.pkl', 'rb')
     cheat_sheet = pickle.load(file_stream)
 
-    showNaNs(df)
-    box_plot_variable(df)
-    show_me_the_money(df)
-    do_you_like_pie(df)
+    # showNaNs(df)
+    # box_plot_variable(df)
+    # show_me_the_money(df)
+    # do_you_like_pie(df)
+    country_price_vagina_plots(df)
     # scatterplotter(df) # VERY HEAVY DO NOT RUN
-    correlation_matrixo(df)
-    show_country_clusters(df)
-    polar_graph(df)
+    # correlation_matrixo(df)
+    # show_country_clusters(df)
+    # polar_graph(df)
 
     print("done")

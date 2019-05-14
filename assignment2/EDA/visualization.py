@@ -102,8 +102,6 @@ def do_you_like_pie(df):
     # print(df.columns)
     df_pie = df.reset_index()
 
-
-
     df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean']].plot.pie(subplots=True)
     plt.title("Mean price of booked hotels per country")
     plt.show()
@@ -179,5 +177,31 @@ def polar_graph(df):
     ax.fill_between(theta, data_std['price_usd'].values, alpha=0.2, color='red')
 
     plt.title("Standard Deviation")
+
+    plt.show()
+
+def country_price_vagina_plots(df):
+    sns.set(style="whitegrid")
+
+    df_pie = df.reset_index()
+    df_pie = df_pie.loc[df_pie['booking_bool'] == 1]
+
+    # print(df_pie['visitor_location_country_id'].unique())
+    
+    filter = True
+    if filter:
+        countries = [219, 92, 55, 31, 220, 205, 100, 99, 130, 98, 59, 216, 129, 158, 2, 15, 132, 181]
+        df_pie = df_pie.loc[df_pie['visitor_location_country_id'].isin(countries)]
+
+    ax = sns.violinplot(y=df_pie.price_usd, x=df_pie.visitor_location_country_id,
+                        data=df_pie, #palette=sns.cubehelix_palette(8),
+                        hue=df_pie.random_bool,
+                        split=True)
+
+    # ax = sns.violinplot(y=df_pie.price_usd, x=df_pie.visitor_location_country_id,
+    #                     data=df_pie, #palette=sns.cubehelix_palette(8),
+    #                     hue=df_pie.booking_bool,
+    #                     split=True)
+    plt.title("Distribution of prices of booked hotels per country. Split on random bool")
 
     plt.show()
