@@ -84,7 +84,7 @@ def box_plot_variable(df):
 
 def show_me_the_money(df):
 
-    df.groupby("booking_bool").price_usd.plot.hist(logy=True, sharex=True, sharey=True, range=(0,3000), bins=20)
+    df.groupby("booking_bool").price_usd.plot.hist(logy=True, sharex=True, sharey=True, bins=20)#, range=(0,200000))
     # pd.DataFrame.hist(  data=df, column='price_usd', by='booking_bool',
     #                     log=True, stacked=True, sharex=True, sharey=True)
     L=plt.legend()
@@ -96,9 +96,13 @@ def show_me_the_money(df):
     plt.show()
 
 def do_you_like_pie(df):
-
+    """
+        Pie charts do not use negative values. Therefore you should not use this after normalization of data!
+    """
     # print(df.columns)
     df_pie = df.reset_index()
+
+
 
     df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean']].plot.pie(subplots=True)
     plt.title("Mean price of booked hotels per country")

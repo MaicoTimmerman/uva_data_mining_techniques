@@ -138,6 +138,8 @@ def cluster_hotel_countries(df, k=4):
     mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
     # Using sklearn
     km = cluster.KMeans(n_clusters=k)
+    # print(mat.isna().sum().sort_values())
+    mat = mat.fillna(0)
     km.fit(mat.values)
     # Get cluster assignment labels
     labels = km.labels_
@@ -162,7 +164,7 @@ def cluster_user_countries(df):
         all users by country, and plot their spending.
     """
     mat = df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean','std']]
-
+    mat = mat.fillna(0)
     # print(mat, len(mat))
     # print(df.visitor_location_country_id.unique(), len(df.visitor_location_country_id.unique()))
 
@@ -187,24 +189,38 @@ def property_id_hacking(df, cheat_sheet):
 
 
 def outlier_killer(df):
-    q = df["price_usd"].quantile(0.99)
+    q = df["price_usd"].quantile(0.999)
     # q = 4000
-    return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
+    # return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
+    return df[(df["price_usd"] < q)]
 
 def normalizer(df, normalize=True):
 
-    things_to_normalize = []
+    """
+        Normalization of data causes the visualizations to often bug or give misleading stats
+        be careful when combining normalization and visualizations!
+    """
+
+
+    things_to_normalize = [ 'visitor_hist_starrating', 'visitor_hist_adr_usd',
+                            'prop_starrating', 'prop_review_score', 'prop_location_score1',
+                            'prop_location_score2', 'prop_log_historical_price',
+                            'price_usd', 'srch_length_of_stay', 'srch_booking_window',
+                            'srch_adults_count', 'srch_children_count', 'srch_room_count',
+                            'srch_query_affinity_score', 'orig_destination_distance',
+                            'comp_rate_avg', 'comp_inv_avg', 'comp_diff_avg',
+                            'country_mean_price', 'country_std_price', 'user_country_mean_spending',
+                            'user_country_std_spending', 'hotel_position_mean',
+                            'hotel_position_std',]
 
     if normalize:
         # normalize with unit gaussian centered
-
-        for variable in non_time_variables:
+        for variable in things_to_normalize:
             df[variable]=(df[variable]-df[variable].mean())/df[variable].var()
 
     else:
         # scale between []-1, 1]
-
-        for variable in non_time_variables:
+        for variable in things_to_normalize:
             df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
 
     return df
@@ -223,17 +239,20 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         df = load_the_datas(path)
+        # show_me_the_money(df)
         df = outlier_killer(df)
+        # show_me_the_money(df)
         df = add_seasons(df)
-        # df = average_competitors(df)
+        df = average_competitors(df)
         df = remove_nans(df)
-        # df = cluster_hotel_countries(df)
-        # df = cluster_user_countries(df)
+        df = cluster_hotel_countries(df)
+        df = cluster_user_countries(df)
 
-        # if training and no_cheat_sheet:
-        #     cheat_sheet = create_cheats_sheet(df)
-        #
-        # df = property_id_hacking(df, cheat_sheet)
+        file_stream = open('../data/cheat_sheet.pkl', 'rb')
+        cheat_sheet = pickle.load(file_stream)
+
+        df = property_id_hacking(df, cheat_sheet)
+        # df = normalizer(df)
 
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
@@ -246,13 +265,13 @@ if __name__ == "__main__":
     file_stream = open('../data/cheat_sheet.pkl', 'rb')
     cheat_sheet = pickle.load(file_stream)
 
-    # showNaNs(df)
+    showNaNs(df)
     box_plot_variable(df)
-    # show_me_the_money(df)
-    # do_you_like_pie(df)
+    show_me_the_money(df)
+    do_you_like_pie(df)
     # scatterplotter(df) # VERY HEAVY DO NOT RUN
-    # correlation_matrixo(df)
-    # show_country_clusters(df)
+    correlation_matrixo(df)
+    show_country_clusters(df)
     polar_graph(df)
 
     print("done")
