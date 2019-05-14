@@ -1,11 +1,9 @@
-import pandas as pd
-from datetime import datetime
-from datetime import timedelta
-import numpy as np
-from sklearn import cluster
-import argparse
 import pickle
-from pathlib import Path
+from datetime import timedelta
+
+import numpy as np
+import pandas as pd
+from sklearn import cluster
 
 from visualization import   scatterplotter, \
                             correlation_matrixo, \
@@ -19,12 +17,10 @@ from visualization import   scatterplotter, \
                             position_bias
 """XGboost?"""
 
-def load_the_datas(filename='tiny_train.csv'):
+
+def load_the_datas(filename='tiny_train.csv', is_train_set=True):
     types = {'srch_id': int,
              'site_id': int,
-             'click_bool': int,
-             'booking_bool': int,
-             'gross_booking_uds': float,
              'visitor_location_country_id': int,
              'visitor_hist_starrating': float,
              'visitor_hist_adr_usd': float,
@@ -73,10 +69,21 @@ def load_the_datas(filename='tiny_train.csv'):
              'comp8_inv': 'Int64',
              'comp8_rate_percent_diff': float}
 
+    if is_train_set:
+        types.update({
+            'click_bool': int,
+            'booking_bool': int,
+            'gross_booking_uds': float,
+        })
+        index_cols = ['srch_id', 'position']
+    else:
+        index_cols = ['srch_id']
     parse_dates = ['date_time']
-    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position'], parse_dates=parse_dates)
+    df = pd.read_csv(filename, dtype=types, index_col=index_cols,
+                     parse_dates=parse_dates)
 
-    df.sort_index(level=['srch_id', 'position'], inplace=True)
+    if is_train_set:
+        df.sort_index(level=['srch_id', 'position'], inplace=True)
 
     return df
 
@@ -130,7 +137,7 @@ def cluster_hotel_countries(df, k=4):
     """
         We cluster the hotels' countries based on the mean and standard distribution of
         each countries hotel prices.
-        Furthermore we add country_mean_price and country_std_price as new features
+        Furthermore we add hotel_country_mean_price and country_std_price as new features
 
     """
     # Convert DataFrame to matrix
@@ -151,8 +158,8 @@ def cluster_hotel_countries(df, k=4):
         variable_name = "hotel_country_cluster_" + str(one_hot_index)
         df[variable_name] = (df["country_cluster"] == one_hot_index).astype(int)
 
-    df["country_mean_price"] = mat.loc[df.prop_country_id]['mean'].values
-    df["country_std_price"] = mat.loc[df.prop_country_id]['std'].values
+    df["hotel_country_mean_price"] = mat.loc[df.prop_country_id]['mean'].values
+    df["hotel_country_std_price"] = mat.loc[df.prop_country_id]['std'].values
 
     return df
 
@@ -221,7 +228,7 @@ def balance_relevancies_stupid (df):
 def balance_relevancies (df):
     # df.assign(srch_id2=df.index.get_level_values('srch_id'))
     df = df.reset_index()
-    df = df.drop_duplicates(subset=['srch_id', 'click_bool', 'booking_bool'])
+    df = df.drop_duplicates(subset=['srch_id', 'relevance'])
     df = df.set_index(['srch_id', 'position'])
     return df
 
@@ -240,9 +247,9 @@ def normalizer(df, normalize=True):
                             'srch_adults_count', 'srch_children_count', 'srch_room_count',
                             'srch_query_affinity_score', 'orig_destination_distance',
                             'comp_rate_avg', 'comp_inv_avg', 'comp_diff_avg',
-                            'country_mean_price', 'country_std_price', 'user_country_mean_spending',
+                            'hotel_country_mean_price', 'hotel_country_std_price', 'user_country_mean_spending',
                             'user_country_std_spending', 'hotel_position_mean',
-                            'hotel_position_std', 'amount_of_nans']
+                            'hotel_position_std', 'number_of_nans']
 
     if normalize:
         # normalize with unit gaussian centered
@@ -257,21 +264,74 @@ def normalizer(df, normalize=True):
     return df
 
 def count_nan_feature(df):
-    df["amount_of_nans"] = df.isnull().sum(axis=1)
-    # print(df)
-    # print(df.amount_of_nans)
+    df["number_of_nans"] = df.isnull().sum(axis=1)
     return df
 
-def preprocess (df):
-    df = count_nan_feature(df)
-    df = outlier_killer(df)
-    df = add_seasons(df)
+def add_relevance_labels (df):
+    def relevance (x):
+        if x['booking_bool'] == 1:
+            return 5
+        if x['click_bool'] == 1:
+            return 1
+        return 0
+    df['relevance'] = df.apply(relevance, axis=1)
+    return df
+
+
+def drop_non_features(df, is_train_set):
+    df.reset_index(inplace=True)
+    shit_to_drop = [
+        'srch_id',
+        'prop_id',
+        'site_id',
+        'visitor_location_country_id',
+        'prop_country_id',
+        'srch_destination_id',
+        'relevance',
+        'country_cluster',
+        'time_of_check_in',
+        'time_of_check_out',
+        'date_time'
+    ]
+
+    if is_train_set:
+        shit_to_drop += ['booking_bool', 'click_bool', 'position',
+                         'gross_bookings_usd']
+    df.drop(shit_to_drop, axis=1, inplace=True)
+    return df
+
+
+def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
+    df = load_the_datas(path, is_train_set=is_train_set)
+    df = preprocess(df, is_train_set=is_train_set)
+
+    srch_ids = df.index.get_level_values('srch_id').to_numpy()
+    prop_ids = df['prop_id'].to_numpy()
+    relevancies = df['relevance'].to_numpy()
+
+    df = drop_non_features(df, is_train_set=is_train_set)
+    df.info()
+
+    features = df.to_numpy()
+    return features, relevancies, srch_ids, prop_ids
+
+
+def preprocess(df, is_train_set):
     df = average_competitors(df)
+    df = count_nan_feature(df)
     df = remove_nans(df)
+    df = outlier_killer(df)
     df = cluster_hotel_countries(df)
-    df = id_hacking(df)
-    # df = normalizer(df)
-    df = balance_relevancies(df)
+    df = add_seasons(df)
+    df = property_id_hacking(df)
+    df = cluster_user_countries(df)
+    df = cluster_site_id(df)
+    df = cluster_srch_destination_id(df)
+
+    df = normalizer(df)
+    if is_train_set:
+        df = add_relevance_labels(df)
+        df = balance_relevancies(df)
     return df
 
 def make_plots (df):
@@ -288,6 +348,10 @@ def make_plots (df):
 
 if __name__ == "__main__":
     path = '../data/tiny_train.csv'
+
+    x, y, srch_ids, prop_ids = prepare_for_mart(path)
+
+    exit(-1)
     # path = '../data/tenth_train.csv'
 
     path = '../data/tenth_train.csv'
@@ -309,6 +373,8 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    make_plots(df)
+    # make_plots(df)
 
+    df = normalizer(df)
+    df.info()
     print("done")

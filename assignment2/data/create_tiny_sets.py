@@ -1,5 +1,7 @@
-import pandas as pd
 from random import shuffle
+
+import pandas as pd
+
 
 def tinify_set(input_file, output_file, n_searches):
     raw_dataset = pd.read_csv(input_file)
@@ -14,6 +16,6 @@ def tinify_set(input_file, output_file, n_searches):
 
 # tinify_set('training_set_VU_DM.csv', 'tiny_train.csv', 1000)
 # tinify_set('test_set_VU_DM.csv', 'tiny_test.csv', 1000)
-tinify_set('training_set_VU_DM.csv', 'tenth_train.csv', 35000)
-tinify_set('test_set_VU_DM.csv', 'tenth_valid.csv', 7000)
-tinify_set('test_set_VU_DM.csv', 'tenth_test.csv', 7000)
+# tinify_set('training_set_VU_DM.csv', 'tenth_train.csv', 35000)
+tinify_set('training_set_VU_DM.csv', 'tenth_valid.csv', 7000)
+tinify_set('training_set_VU_DM.csv', 'tenth_test.csv', 7000)
