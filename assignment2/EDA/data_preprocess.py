@@ -1,30 +1,19 @@
-import pandas as pd
-from datetime import datetime
-from datetime import timedelta
-import numpy as np
-from sklearn import cluster
-import argparse
 import pickle
-from pathlib import Path
+from datetime import timedelta
 
-from visualization import   scatterplotter, \
-                            correlation_matrixo, \
-                            show_country_clusters, \
-                            showNaNs, \
-                            box_plot_variable, \
-                            show_me_the_money, \
-                            do_you_like_pie, \
-                            polar_graph, \
-                            country_price_vagina_plots
+import numpy as np
+import pandas as pd
+from sklearn import cluster
+
+from visualization import show_country_clusters, \
+    polar_graph
 
 """XGboost?"""
 
-def load_the_datas(filename='tiny_train.csv'):
+
+def load_the_datas(filename='tiny_train.csv', is_train_set=True):
     types = {'srch_id': int,
              'site_id': int,
-             'click_bool': int,
-             'booking_bool': int,
-             'gross_booking_uds': float,
              'visitor_location_country_id': int,
              'visitor_hist_starrating': float,
              'visitor_hist_adr_usd': float,
@@ -73,10 +62,21 @@ def load_the_datas(filename='tiny_train.csv'):
              'comp8_inv': 'Int64',
              'comp8_rate_percent_diff': float}
 
+    if is_train_set:
+        types.update({
+            'click_bool': int,
+            'booking_bool': int,
+            'gross_booking_uds': float,
+        })
+        index_cols = ['srch_id', 'position']
+    else:
+        index_cols = ['srch_id']
     parse_dates = ['date_time']
-    df = pd.read_csv(filename, dtype=types, index_col=['srch_id', 'position'], parse_dates=parse_dates)
+    df = pd.read_csv(filename, dtype=types, index_col=index_cols,
+                     parse_dates=parse_dates)
 
-    df.sort_index(level=['srch_id', 'position'], inplace=True)
+    if is_train_set:
+        df.sort_index(level=['srch_id', 'position'], inplace=True)
 
     return df
 
@@ -289,7 +289,8 @@ def add_relevance_labels (df):
     df['relevance'] = df.apply(relevance, axis=1)
     return df
 
-def drop_non_features (df):
+
+def drop_non_features(df, is_train_set):
     df.reset_index(inplace=True)
     shit_to_drop = [
         'srch_id',
@@ -299,34 +300,35 @@ def drop_non_features (df):
         'prop_country_id',
         'srch_destination_id',
         'relevance',
-        'booking_bool',
-        'click_bool',
         'country_cluster',
-        'position',
-        'gross_bookings_usd',
         'time_of_check_in',
         'time_of_check_out',
         'date_time'
     ]
+
+    if is_train_set:
+        shit_to_drop += ['booking_bool', 'click_bool', 'position',
+                         'gross_bookings_usd']
     df.drop(shit_to_drop, axis=1, inplace=True)
     return df
 
-def prepare_for_mart (path='tiny_train.csv'):
-    df = load_the_datas(path)
-    df = preprocess(df)
+
+def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
+    df = load_the_datas(path, is_train_set=is_train_set)
+    df = preprocess(df, is_train_set=is_train_set)
 
     srch_ids = df.index.get_level_values('srch_id').to_numpy()
     prop_ids = df['prop_id'].to_numpy()
     relevancies = df['relevance'].to_numpy()
 
-    df = drop_non_features(df)
+    df = drop_non_features(df, is_train_set=is_train_set)
     df.info()
 
     features = df.to_numpy()
     return features, relevancies, srch_ids, prop_ids
 
 
-def preprocess (df):
+def preprocess(df, is_train_set):
     df = average_competitors(df)
     df = count_nan_feature(df)
     df = remove_nans(df)
@@ -339,9 +341,9 @@ def preprocess (df):
     df = cluster_srch_destination_id(df)
 
     df = normalizer(df)
-
-    df = add_relevance_labels(df)
-    df = balance_relevancies(df)
+    if is_train_set:
+        df = add_relevance_labels(df)
+        df = balance_relevancies(df)
     return df
 
 def make_plots (df):
