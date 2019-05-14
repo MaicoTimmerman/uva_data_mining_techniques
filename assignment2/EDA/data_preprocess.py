@@ -132,8 +132,6 @@ def cluster_hotel_countries(df, k=4):
         each countries hotel prices.
         Furthermore we add hotel_country_mean_price and country_std_price as new features
 
-        TODO: clusters are now valued between 0-k, but these should become one-hot
-        vectors.
     """
     # Convert DataFrame to matrix
     mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
@@ -172,6 +170,30 @@ def cluster_user_countries(df):
     df["user_country_mean_spending"] = mat.loc[df.visitor_location_country_id]['mean'].values
     df["user_country_std_spending"] = mat.loc[df.visitor_location_country_id]['std'].values
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
+    return df
+
+def cluster_site_id(df):
+    """
+        same shit for site_id
+    """
+    mat = df.loc[df['booking_bool'] == 1].groupby("site_id").price_usd.describe()[['mean','std']]
+    mat = mat.fillna(0)
+
+    df["site_id_mean"] = mat.loc[df.site_id]['mean'].values
+    df["site_id_std"] = mat.loc[df.site_id]['std'].values
+    df.fillna({'site_id_mean': 0, 'site_id_std': 0}, inplace=True)
+    return df
+
+def cluster_srch_destination_id(df):
+    """
+        same shit for srch_destination_id
+    """
+    mat = df.loc[df['booking_bool'] == 1].groupby("srch_destination_id").price_usd.describe()[['mean','std']]
+    mat = mat.fillna(0)
+
+    df["srch_destination_id_mean"] = mat.loc[df.srch_destination_id]['mean'].values
+    df["srch_destination_id_std"] = mat.loc[df.srch_destination]['std'].values
+    df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
     return df
 
 def property_id_hacking(df):
@@ -313,6 +335,8 @@ def preprocess (df):
     df = add_seasons(df)
     df = property_id_hacking(df)
     df = cluster_user_countries(df)
+    df = cluster_site_id(df)
+    df = cluster_srch_destination_id(df)
 
     df = normalizer(df)
 

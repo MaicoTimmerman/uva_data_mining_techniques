@@ -113,94 +113,83 @@ def polar_graph(df):
 
     df = df[df['booking_bool'] == 1]
 
-    if False:
-        data_mean = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).month]).mean()
-        data_sum = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).month]).sum()
-        data_count = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).month]).count()
-        data_sum.loc[13] = data_sum.loc[1]
-        data_mean.loc[13] = data_mean.loc[1]
-        data_count.loc[13] = data_count.loc[1]
+    data_sum = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).sum()
+    data_describe = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).describe()
 
-        data_mean = data_mean.reindex(list((v) for v in range(data_mean.index[0], data_mean.index[-1]+1))).fillna(0)
-        data_sum = data_sum.reindex(list((v) for v in range(data_sum.index[0], data_sum.index[-1]+1))).fillna(0)
-        data_count = data_count.reindex(list((v) for v in range(data_count.index[0], data_count.index[-1]+1))).fillna(0)
-    if True:
-        data_mean = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).mean()
-        data_sum = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).sum()
-        data_count = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).count()
-        data_std = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).week]).std()
+    data_sum.loc[53] = data_sum.loc[1]
+    data_describe.loc[53] = data_describe.loc[1]
 
-        data_sum.loc[53] = data_sum.loc[1]
-        data_mean.loc[53] = data_mean.loc[1]
-        data_count.loc[53] = data_count.loc[1]
-        data_std.loc[53] = data_std.loc[1]
+    data_sum = data_sum.reindex(list((v) for v in range(data_sum.index[0], data_sum.index[-1]+1))).fillna(0)
+    data_describe = data_describe.reindex(list((v) for v in range(data_describe.index[0], data_describe.index[-1]+1))).fillna(0)
 
-        data_mean = data_mean.reindex(list((v) for v in range(data_mean.index[0], data_mean.index[-1]+1))).fillna(0)
-        data_sum = data_sum.reindex(list((v) for v in range(data_sum.index[0], data_sum.index[-1]+1))).fillna(0)
-        data_count = data_count.reindex(list((v) for v in range(data_count.index[0], data_count.index[-1]+1))).fillna(0)
-        data_std = data_std.reindex(list((v) for v in range(data_std.index[0], data_std.index[-1]+1))).fillna(0)
+    # print(data_sum.columns)
+    # data_sum = data_sum[data_sum['country_cluster'] == 1]
+    # data_describe = data_describe[data_describe['country_cluster'] == 1]
 
-    theta = np.linspace(0,2*np.pi,len(data_mean.index))
+    data_sum = data_sum['price_usd']
+    data_describe = data_describe['price_usd']
+    # print(data_describe.columns, data_describe['50%'])
+    # print(df.country_cluster)
+
+    theta = np.linspace(0,2*np.pi,len(data_describe.index))
     ticks = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
 
-    ax = plt.subplot(221, projection='polar')
 
-    ax.plot(theta, data_count['price_usd'].values, 'r')
+
+    ax = plt.subplot(131, projection='polar')
+
+    ax.plot(theta, data_describe['count'], 'r')
     ax.set_xticklabels(ticks)
     ax.set_xticks(np.linspace(0,2*np.pi,13))
-    ax.fill_between(theta, data_count['price_usd'].values, alpha=0.2, color='red')
-    plt.title("Total amount of bookings")
+    ax.fill_between(x=theta, y1=data_describe['count'],
+                    alpha=0.2, color='red')
 
-    ax = plt.subplot(222, projection='polar')
+    plt.title("Number of bookings made")
 
-    ax.plot(theta, data_mean['price_usd'].values, 'r')
+    ax = plt.subplot(132, projection='polar')
+
+    ax.plot(theta, data_describe['mean'], 'r')
     ax.set_xticklabels(ticks)
     ax.set_xticks(np.linspace(0,2*np.pi,13))
-    ax.fill_between(theta, data_mean['price_usd'].values, alpha=0.2, color='red')
+    ax.fill_between(x=theta, y1=data_describe['75%'],
+                    y2=data_describe['25%'],
+                    alpha=0.2, color='red')
 
-    plt.title("Average amount of monies spent on bookings")
+    plt.title("Average price for bookings")
 
-    ax = plt.subplot(223, projection='polar')
+    ax = plt.subplot(133, projection='polar')
 
-    ax.plot(theta, data_sum['price_usd'].values, 'r')
+    ax.plot(theta, data_sum, 'r')
     ax.set_xticklabels(ticks)
     ax.set_xticks(np.linspace(0,2*np.pi,13))
-    ax.fill_between(theta, data_sum['price_usd'].values, alpha=0.2, color='red')
+    ax.fill_between(x=theta, y1=data_sum,
+                    alpha=0.2, color='red')
 
-    plt.title("Total amount of monies spent on bookings")
-
-    ax = plt.subplot(224, projection='polar')
-
-    ax.plot(theta, data_std['price_usd'].values, 'r')
-    ax.set_xticklabels(ticks)
-    ax.set_xticks(np.linspace(0,2*np.pi,13))
-    ax.fill_between(theta, data_std['price_usd'].values, alpha=0.2, color='red')
-
-    plt.title("Standard Deviation")
+    plt.title("Total sum of monies spent on bookings")
 
     plt.show()
 
 def country_price_vagina_plots(df):
     sns.set(style="whitegrid")
 
-    df_pie = df.reset_index()
-    df_pie = df_pie.loc[df_pie['booking_bool'] == 1]
+    df_vio = df.reset_index()
+    df_vio = df_vio.loc[df_vio['booking_bool'] == 1]
 
-    # print(df_pie['visitor_location_country_id'].unique())
-    
+    # print(df_vio['visitor_location_country_id'].unique())
+
     filter = True
     if filter:
         countries = [219, 92, 55, 31, 220, 205, 100, 99, 130, 98, 59, 216, 129, 158, 2, 15, 132, 181]
-        df_pie = df_pie.loc[df_pie['visitor_location_country_id'].isin(countries)]
+        df_vio = df_vio.loc[df_vio['visitor_location_country_id'].isin(countries)]
 
-    ax = sns.violinplot(y=df_pie.price_usd, x=df_pie.visitor_location_country_id,
-                        data=df_pie, #palette=sns.cubehelix_palette(8),
-                        hue=df_pie.random_bool,
+    ax = sns.violinplot(y=df_vio.price_usd, x=df_vio.visitor_location_country_id,
+                        data=df_vio, #palette=sns.cubehelix_palette(8),
+                        hue=df_vio.random_bool,
                         split=True)
 
-    # ax = sns.violinplot(y=df_pie.price_usd, x=df_pie.visitor_location_country_id,
-    #                     data=df_pie, #palette=sns.cubehelix_palette(8),
-    #                     hue=df_pie.booking_bool,
+    # ax = sns.violinplot(y=df_vio.price_usd, x=df_vio.visitor_location_country_id,
+    #                     data=df_vio, #palette=sns.cubehelix_palette(8),
+    #                     hue=df_vio.booking_bool,
     #                     split=True)
     plt.title("Distribution of prices of booked hotels per country. Split on random bool")
 
