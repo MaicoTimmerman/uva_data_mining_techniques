@@ -172,6 +172,30 @@ def cluster_user_countries(df):
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
     return df
 
+def cluster_site_id(df):
+    """
+        same shit for site_id
+    """
+    mat = df.loc[df['booking_bool'] == 1].groupby("site_id").price_usd.describe()[['mean','std']]
+    mat = mat.fillna(0)
+
+    df["site_id_mean"] = mat.loc[df.site_id]['mean'].values
+    df["site_id_std"] = mat.loc[df.site_id]['std'].values
+    df.fillna({'site_id_mean': 0, 'site_id_std': 0}, inplace=True)
+    return df
+
+def cluster_srch_destination_id(df):
+    """
+        same shit for srch_destination_id
+    """
+    mat = df.loc[df['booking_bool'] == 1].groupby("srch_destination_id").price_usd.describe()[['mean','std']]
+    mat = mat.fillna(0)
+
+    df["srch_destination_id_mean"] = mat.loc[df.srch_destination_id]['mean'].values
+    df["srch_destination_id_std"] = mat.loc[df.srch_destination]['std'].values
+    df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
+    return df
+
 def property_id_hacking(df):
     file_stream = open('../data/cheat_sheet.pkl', 'rb')
     cheat_sheet = pickle.load(file_stream)
@@ -267,6 +291,8 @@ def preprocess (df):
     df = remove_nans(df)
     df = cluster_hotel_countries(df)
     df = cluster_user_countries(df)
+    df = cluster_site_id(df)
+    df = cluster_srch_destination_id(df)
     df = property_id_hacking(df)
     # df = normalizer(df)
     df = balance_relevancies(df)
