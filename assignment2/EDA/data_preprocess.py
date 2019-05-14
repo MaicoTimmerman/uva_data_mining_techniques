@@ -237,7 +237,7 @@ def normalizer(df, normalize=True):
                             'comp_rate_avg', 'comp_inv_avg', 'comp_diff_avg',
                             'country_mean_price', 'country_std_price', 'user_country_mean_spending',
                             'user_country_std_spending', 'hotel_position_mean',
-                            'hotel_position_std',]
+                            'hotel_position_std', 'amount_of_nans']
 
     if normalize:
         # normalize with unit gaussian centered
@@ -249,6 +249,12 @@ def normalizer(df, normalize=True):
         for variable in things_to_normalize:
             df[variable]=(df[variable]-df[variable].mean())/(df[variable].max()-df[variable].min())
 
+    return df
+
+def count_nan_feature(df):
+    df["amount_of_nans"] = df.isnull().sum(axis=1)
+    # print(df)
+    # print(df.amount_of_nans)
     return df
 
 if __name__ == "__main__":
@@ -265,6 +271,7 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         df = load_the_datas(path)
+        df = count_nan_feature(df)
         # show_me_the_money(df)
         df = outlier_killer(df)
         # show_me_the_money(df)
