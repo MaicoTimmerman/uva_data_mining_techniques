@@ -277,7 +277,6 @@ def add_relevance_labels (df):
     df['relevance'] = df.apply(relevance, axis=1)
     return df
 
-
 def drop_non_features(df, is_train_set):
     df.reset_index(inplace=True)
     shit_to_drop = [
@@ -299,7 +298,6 @@ def drop_non_features(df, is_train_set):
                          'gross_bookings_usd']
     df.drop(shit_to_drop, axis=1, inplace=True)
     return df
-
 
 def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = load_the_datas(path, is_train_set=is_train_set)
@@ -323,10 +321,7 @@ def preprocess(df, is_train_set):
     df = outlier_killer(df)
     df = cluster_hotel_countries(df)
     df = add_seasons(df)
-    df = property_id_hacking(df)
-    df = cluster_user_countries(df)
-    df = cluster_site_id(df)
-    df = cluster_srch_destination_id(df)
+    df = id_hacking(df)
 
     df = normalizer(df)
     if is_train_set:
