@@ -174,7 +174,9 @@ def cluster_user_countries(df):
     df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
     return df
 
-def property_id_hacking(df, cheat_sheet):
+def property_id_hacking(df):
+    file_stream = open('../data/cheat_sheet.pkl', 'rb')
+    cheat_sheet = pickle.load(file_stream)
 
     df["hotel_position_mean"] = cheat_sheet.loc[df.prop_id]['mean'].values
     df["hotel_position_std"] = cheat_sheet.loc[df.prop_id]['std'].values
@@ -257,48 +259,22 @@ def count_nan_feature(df):
     # print(df.amount_of_nans)
     return df
 
-if __name__ == "__main__":
+def preprocess (df):
+    df = count_nan_feature(df)
+    # show_me_the_money(df)
+    df = outlier_killer(df)
+    # show_me_the_money(df)
+    df = add_seasons(df)
+    df = average_competitors(df)
+    df = remove_nans(df)
+    df = cluster_hotel_countries(df)
+    df = cluster_user_countries(df)
+    df = property_id_hacking(df)
+    # df = normalizer(df)
+    df = balance_relevancies(df)
+    return df
 
-    path = '../data/tiny_train.csv'
-    # path = '../data/tenth_train.csv'
-
-    path = '../data/tenth_train.csv'
-
-    parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
-    parser.add_argument('--force_preprocess', action='store_true')
-    args = parser.parse_args()
-
-    preprocessed_dataset_file = Path("preprocessed_data.pkl")
-    if not preprocessed_dataset_file.exists() or args.force_preprocess:
-        df = load_the_datas(path)
-        df = count_nan_feature(df)
-        # show_me_the_money(df)
-        df = outlier_killer(df)
-        # show_me_the_money(df)
-        df = add_seasons(df)
-        df = average_competitors(df)
-        df = remove_nans(df)
-        df = cluster_hotel_countries(df)
-        df = cluster_user_countries(df)
-
-        file_stream = open('../data/cheat_sheet.pkl', 'rb')
-        cheat_sheet = pickle.load(file_stream)
-
-        df = property_id_hacking(df, cheat_sheet)
-        # df = normalizer(df)
-        df = balance_relevancies(df)
-
-        file_stream = open(preprocessed_dataset_file, 'wb')
-        pickle.dump(df, file_stream)
-        print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
-    else:
-        file_stream = open(preprocessed_dataset_file, 'rb')
-        df = pickle.load(file_stream)
-        print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
-
-    file_stream = open('../data/cheat_sheet.pkl', 'rb')
-    cheat_sheet = pickle.load(file_stream)
-
+def make_plots (df):
     # showNaNs(df)
     # box_plot_variable(df)
     # show_me_the_money(df)
@@ -308,5 +284,30 @@ if __name__ == "__main__":
     # correlation_matrixo(df)
     # show_country_clusters(df)
     # polar_graph(df)
+
+if __name__ == "__main__":
+    path = '../data/tiny_train.csv'
+    # path = '../data/tenth_train.csv'
+
+    # path = '../data/tenth_train.csv'
+
+    parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
+    parser.add_argument('--force_preprocess', action='store_true')
+    args = parser.parse_args()
+
+    preprocessed_dataset_file = Path("preprocessed_data.pkl")
+    if not preprocessed_dataset_file.exists() or args.force_preprocess:
+        df = load_the_datas(path)
+        df = preprocess(df)
+
+        file_stream = open(preprocessed_dataset_file, 'wb')
+        pickle.dump(df, file_stream)
+        print(f'Wrote preprocessed dataset to \'{preprocessed_dataset_file}\'.')
+    else:
+        file_stream = open(preprocessed_dataset_file, 'rb')
+        df = pickle.load(file_stream)
+        print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
+
+    make_plots(df)
 
     print("done")
