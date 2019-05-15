@@ -286,7 +286,6 @@ def drop_non_features(df, is_train_set):
         'visitor_location_country_id',
         'prop_country_id',
         'srch_destination_id',
-        'relevance',
         'country_cluster',
         'time_of_check_in',
         'time_of_check_out',
@@ -294,7 +293,10 @@ def drop_non_features(df, is_train_set):
     ]
 
     if is_train_set:
-        shit_to_drop += ['booking_bool', 'click_bool', 'position',
+        shit_to_drop += ['booking_bool',
+                         'click_bool',
+                         'position',
+                         'relevance',
                          'gross_bookings_usd']
     df.drop(shit_to_drop, axis=1, inplace=True)
     return df
@@ -305,7 +307,9 @@ def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
 
     srch_ids = df.index.get_level_values('srch_id').to_numpy()
     prop_ids = df['prop_id'].to_numpy()
-    relevancies = df['relevance'].to_numpy()
+    relevancies = np.array(1)
+    if is_train_set:
+        relevancies = df['relevance'].to_numpy()
 
     df = drop_non_features(df, is_train_set=is_train_set)
     df.info()

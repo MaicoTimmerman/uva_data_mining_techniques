@@ -46,6 +46,7 @@ def train_and_save():
 
 def predict_generate():
     dataset = "test_set_VU_DM"
+    # dataset = "tiny_test"
 
     if not os.path.exists(f"{dataset}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
@@ -57,7 +58,7 @@ def predict_generate():
         with open(f"{dataset}.pkl", "rb") as f:
             features, relevancies, search_ids, prop_ids = pickle.load(f)
 
-    with open(f"model_{dataset}.pkl", "rb") as f:
+    with open(f"model_tiny_train.pkl", "rb") as f:
         model: pyltr.models.LambdaMART = pickle.load(f)
 
     Ey = model.predict(features)
@@ -66,7 +67,7 @@ def predict_generate():
                        'srch_ids': search_ids,
                        'prop_ids': prop_ids}) \
         .sort_values(['relevancies'], ascending=False)
-    with open(f"output_{dataset}.txt", "w") as f:
+    with open(f"output_{dataset}.txt", "w", newline='') as f:
         csv_writer = csv.DictWriter(f, ["srch_id", "prop_id"])
         csv_writer.writeheader()
 
