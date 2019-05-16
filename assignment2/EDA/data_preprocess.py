@@ -4,6 +4,8 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from sklearn import cluster
+import argparse
+from pathlib import Path
 
 from visualization import   scatterplotter, \
                             correlation_matrixo, \
@@ -14,7 +16,8 @@ from visualization import   scatterplotter, \
                             do_you_like_pie, \
                             polar_graph, \
                             country_price_vagina_plots, \
-                            position_bias
+                            position_bias, \
+                            histogram_site_id
 """XGboost?"""
 
 
@@ -353,6 +356,7 @@ def make_plots (df):
     correlation_matrixo(df)
     show_country_clusters(df)
     polar_graph(df)
+    histogram_site_id(df)
     # position_bias(df)
 
 if __name__ == "__main__":
@@ -372,7 +376,7 @@ if __name__ == "__main__":
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
         df = load_the_datas(path)
-        df = preprocess(df)
+        df = preprocess(df, True)
 
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)

@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from math import radians
 
+def histogram_site_id (df):
+    plt.hist(df['site_id'], bins=len(df['site_id'].unique()))
+    plt.show()
+
 def scatterplotter(df):
     to_do = [
     'visitor_hist_starrating',
