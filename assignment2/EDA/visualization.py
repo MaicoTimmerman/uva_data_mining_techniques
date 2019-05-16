@@ -233,8 +233,8 @@ def visualize_trainings():
             Ss.append(int(monitor_output[-1]))
 
     plt.plot(iterations, train_scores, label='Training score')
-    plt.plot(iterations, Cs, label='C score')
-    plt.plot(iterations, Bs, label='B score')
+    plt.plot(iterations, Cs, label='Current Validation score')
+    plt.plot(iterations, Bs, label='Best Validation score')
     plt.legend()
     plt.title("Training results LambdaMART")
     plt.xlabel("Iteration")
