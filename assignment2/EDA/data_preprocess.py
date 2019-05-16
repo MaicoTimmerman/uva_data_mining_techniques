@@ -366,9 +366,9 @@ def make_plots (df):
 if __name__ == "__main__":
     path = '../data/tiny_train.csv'
 
-    x, y, srch_ids, prop_ids = prepare_for_mart(path)
-
-    exit(-1)
+    # x, y, srch_ids, prop_ids = prepare_for_mart(path)
+    #
+    # exit(-1)
     # path = '../data/tenth_train.csv'
 
     path = '../data/tenth_train.csv'
