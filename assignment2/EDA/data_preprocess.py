@@ -392,6 +392,6 @@ if __name__ == "__main__":
 
     # make_plots(df)
 
-    df = normalizer(df)
+    # df = normalizer(df)
     df.info()
     print("done")

@@ -234,7 +234,8 @@ def visualize_trainings():
 
     plt.plot(iterations, train_scores, label='Training score')
     plt.plot(iterations, Cs, label='Current Validation score')
-    plt.plot(iterations, Bs, label='Best Validation score')
+    plt.axhline(Bs[-1], color='red', linestyle='--', label='Best Validation score')
+    # plt.plot(iterations, , label='Best Validation score')
     plt.legend()
     plt.title("Training results LambdaMART")
     plt.xlabel("Iteration")
