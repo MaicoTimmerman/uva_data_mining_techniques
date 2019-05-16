@@ -8,7 +8,7 @@ import seaborn as sns
 from math import radians
 
 def histogram_site_id (df):
-    plt.hist(df['site_id'], bins=len(df['site_id'].unique()))
+    plt.hist(df['site_id'], bins=len(df['site_id'].unique()), log=True)
     plt.show()
 
 def scatterplotter(df):
