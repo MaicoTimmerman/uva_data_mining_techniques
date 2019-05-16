@@ -87,13 +87,21 @@ def load_the_datas(filename='tiny_train.csv', is_train_set=True):
 
     return df
 
-def add_seasons(df):
+def add_circular_day_of_year_features (df):
     df['time_of_check_in'] = df['date_time'] + df['srch_booking_window'].apply(lambda x: timedelta(x))
     df['time_of_check_out'] = df['time_of_check_in'] + df['srch_length_of_stay'].apply(lambda x: timedelta(x))
-    check_ins = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday) / 365
-    df['sin_day_of_year_check_in'] = np.sin(2*np.pi*check_ins)
-    df['cos_day_of_year_check_in'] = np.cos(2*np.pi*check_ins)
+    booking_doys = df['date_time'].apply(lambda x: x.timetuple().tm_yday) / 365
+    check_in_doys = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday) / 365
+    check_out_doys = df['time_of_check_out'].apply(lambda x: x.timetuple().tm_yday) / 365
+    df['sin_day_of_year_booking'] = np.sin(2*np.pi*booking_doys)
+    df['cos_day_of_year_booking'] = np.cos(2*np.pi*booking_doys)
+    df['sin_day_of_year_check_in'] = np.sin(2*np.pi*check_in_doys)
+    df['cos_day_of_year_check_in'] = np.cos(2*np.pi*check_in_doys)
+    df['sin_day_of_year_check_out'] = np.sin(2*np.pi*check_out_doys)
+    df['cos_day_of_year_check_out'] = np.cos(2*np.pi*check_out_doys)
+    return df
 
+def add_seasons(df):
     df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([3,4,5]), 1, 0)
     df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([6,7,8]), 1, 0)
     df['AUTUMN'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([9,10,11]), 1, 0)
@@ -303,6 +311,7 @@ def drop_non_features(df, is_train_set):
 
 def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = load_the_datas(path, is_train_set=is_train_set)
+    df.info()
     df = preprocess(df, is_train_set=is_train_set)
 
     srch_ids = df.index.get_level_values('srch_id').to_numpy()
@@ -324,13 +333,14 @@ def preprocess(df, is_train_set):
     df = remove_nans(df)
     df = outlier_killer(df)
     df = cluster_hotel_countries(df)
+    df = add_circular_day_of_year_features(df)
     df = add_seasons(df)
     df = id_hacking(df)
 
     df = normalizer(df)
     if is_train_set:
         df = add_relevance_labels(df)
-        df = balance_relevancies(df)
+        # df = balance_relevancies(df)
     return df
 
 def make_plots (df):
