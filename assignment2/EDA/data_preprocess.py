@@ -253,6 +253,16 @@ def balance_relevancies (df):
     df = df.set_index(['srch_id', 'position'])
     return df
 
+
+def balance_sampling(df):
+    print(f"Removing all but 5 negative samples from {df.shape} dataframe.")
+    for srch_id, df2 in df.groupby('srch_id'):
+
+        df.drop(index=df2[df2['relevance'] == 0][5:].index.values,
+                axis=1, inplace=True)
+    print(f"New dataframe has size {df.shape}.")
+
+
 def normalizer(df, normalize=True):
 
     """
@@ -379,6 +389,7 @@ def preprocess(df, is_train_set):
     # df = normalizer(df) its broken and I don't want to fix it :)
     if is_train_set:
         df = add_relevance_labels(df)
+        df = balance_sampling(df)
         # df = balance_relevancies(df)
 
     return df
