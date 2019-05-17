@@ -6,6 +6,7 @@ from pandas.plotting import scatter_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 from math import radians
+import csv
 
 def histogram_site_id (df):
     plt.hist(df['site_id'], bins=len(df['site_id'].unique()), log=True)
@@ -207,3 +208,38 @@ def position_bias(df):
     print(df_1.columns)
     df_1.plot.bar(x=df_1['hotel_position_mean'] , y=df_1.count())
     plt.show()
+
+def visualize_trainings():
+    path = '../models/training_curves.csv'
+
+    iterations = []
+    train_scores = []
+    Cs = []
+    Bs = []
+    Ss = []
+
+    with open(path, 'r', newline='\n') as f:
+        reader = csv.reader(f, delimiter=';')
+        for i, row in enumerate(reader):
+            if i == 0:
+                continue
+            # print(row)
+            iterations.append(int(row[0]))
+            train_scores.append(float(row[1]))
+            monitor_output = row[-1].replace(" ", "").split(":")
+            monitor_output.pop(0)
+            Cs.append(float(monitor_output[0][:-1]))
+            Bs.append(float(monitor_output[1][:-1]))
+            Ss.append(int(monitor_output[-1]))
+
+    plt.plot(iterations, train_scores, label='Training score')
+    plt.plot(iterations, Cs, label='Current Validation score')
+    plt.axhline(Bs[-1], color='red', linestyle='--', label='Best Validation score')
+    # plt.plot(iterations, , label='Best Validation score')
+    plt.legend()
+    plt.title("Training results LambdaMART")
+    plt.xlabel("Iteration")
+    plt.show()
+
+if __name__ == "__main__":
+    visualize_trainings()

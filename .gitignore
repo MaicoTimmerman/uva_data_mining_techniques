@@ -15,3 +15,25 @@ assignment2/data/tenth_train\.csv
 assignment2/data/tenth_valid\.csv
 
 *.pyc
+
+assignment2/models/model_tenth_train\.pkl
+
+assignment2/models/model_tiny_train\.pkl
+
+assignment2/models/output_tiny_test\.txt
+
+assignment2/models/output_test_set_VU_DM\.txt
+
+assignment2/models/training_set_VU_DM\.pkl
+
+assignment2/models/tiny_train\.pkl
+
+assignment2/models/tiny_test\.pkl
+
+assignment2/models/test_set_VU_DM\.pkl
+
+assignment2/models/tenth_train\.pkl
+
+assignment2/models/model_training_set_VU_DM\.pkl
+
+assignment2/EDA/preprocessed_data\.pkl

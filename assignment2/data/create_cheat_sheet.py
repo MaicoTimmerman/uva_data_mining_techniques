@@ -69,23 +69,26 @@ def outlier_killer(df):
     # return df[(df["price_usd"] < q) & (df["booking_bool"] == 1)]
     return df[(df["price_usd"] < q)]
 
-def visitor_location_country_id_cheat_sheet(df):
-    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("visitor_location_country_id").price_usd.describe()[['mean','std']]
-    # mat = df.loc[df['visitor_hist_adr_usd'] > 0].groupby("visitor_location_country_id").visitor_hist_adr_usd.describe()[['mean','std']]
-    cheat_cheet = cheat_cheet.fillna(0)
+def make_generic_cheat_sheet(df, group_by_id, variables_to_average = None):
 
-    return cheat_cheet
+    df_to_use = df.loc[df['booking_bool'] == 1].groupby(group_by_id)
 
-def site_id_cheat_sheet(df):
-    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("site_id").price_usd.describe()[['mean','std']]
-    cheat_cheet = cheat_cheet.fillna(0)
+    if (variables_to_average == None):
+        variables_to_average = ['srch_children_count', 'srch_adults_count',
+                                'srch_booking_window', 'srch_length_of_stay',
+                                'srch_query_affinity_score', 'orig_destination_distance',
+                                'prop_location_score2', 'prop_location_score1',
+                                'prop_review_score', 'prop_starrating', 'price_usd']
 
-    return cheat_cheet
+    name_for_std = group_by_id + '_' + 'price_usd' + '_std'
+    cheat_cheet = df_to_use.price_usd.describe()[['std']]
+    cheat_cheet.rename(columns = {"std": name_for_std}, inplace=True)
 
-def srch_destination_id_cheat_sheet(df):
-    cheat_cheet = df.loc[df['booking_bool'] == 1].groupby("srch_destination_id").price_usd.describe()[['mean','std']]
-    cheat_cheet = cheat_cheet.fillna(0)
+    for variable in variables_to_average:
+        cheat_sheet_name = group_by_id + '_' + variable + '_mean'
+        cheat_cheet[cheat_sheet_name] = df_to_use[variable].mean()
 
+    cheat_cheet.fillna(0, inplace=True)
     return cheat_cheet
 
 def prop_id_cheats_sheet(df):
@@ -102,36 +105,56 @@ def prop_id_cheats_sheet(df):
     # assert 'gross_booking_usd' in temp_df.columns, ("Please use training data to create cheat sheet")
     assert 'click_bool' in temp_df.columns, ("Please use training data to create cheat sheet")
 
-    booker_bools = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
-    clicker_bools = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
-    cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['mean','std']]
+    group_by_id = 'prop_id'
 
-    cheat_cheet.fillna({'mean':0, 'std': 0}, inplace=True)
+    name_for_std = group_by_id + '_' + 'position' + '_std'
+    cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['std']]
+    cheat_cheet.rename(columns = {"mean": name_for_std}, inplace=True)
 
-    cheat_cheet['click_ratio'] = clicker_bools
-    cheat_cheet['book_ratio'] = booker_bools
+    cheat_cheet['prop_id_position_mean'] = temp_df.groupby('prop_id')['position'].describe()[['mean']]
+    cheat_cheet['prop_id_book_ratio'] = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
+    cheat_cheet['prop_id_clicked_ratio'] = temp_df.groupby('prop_id')['click_bool'].sum()/temp_df.groupby('prop_id')['click_bool'].count()
+
+    cheat_cheet.fillna(0, inplace=True)
 
     return cheat_cheet
 
 if __name__ == "__main__":
     path = 'training_set_VU_DM.csv'
+    # path = 'tiny_train.csv'
     df = load_the_datas(path)
+    print("Data Loaded")
+
     df = outlier_killer(df)
+    print("Outliers removed")
 
     cheat_sheet = prop_id_cheats_sheet(df)
     file_stream = open('cheat_sheet_prop_id.pkl', 'wb')
     pickle.dump(cheat_sheet, file_stream)
+    print("prop_id_cheats_sheet made")
 
-    cheat_sheet = visitor_location_country_id_cheat_sheet(df)
+    group_by_id = 'visitor_location_country_id'
+    cheat_sheet = make_generic_cheat_sheet(df, group_by_id)
     file_stream = open('cheat_sheet_visitor_location_country_id.pkl', 'wb')
     pickle.dump(cheat_sheet, file_stream)
+    print("visitor_location_country_id_cheats_sheet made")
 
-    cheat_sheet = site_id_cheat_sheet(df)
+    group_by_id = 'site_id'
+    cheat_sheet = make_generic_cheat_sheet(df, group_by_id)
     file_stream = open('cheat_sheet_site_id.pkl', 'wb')
     pickle.dump(cheat_sheet, file_stream)
+    print("site_id_cheats_sheet made")
 
-    cheat_sheet = srch_destination_id_cheat_sheet(df)
+    group_by_id = 'srch_destination_id'
+    cheat_sheet = make_generic_cheat_sheet(df, group_by_id)
     file_stream = open('cheat_sheet_srch_destination_id.pkl', 'wb')
     pickle.dump(cheat_sheet, file_stream)
+    print("srch_destination_id_cheats_sheet made")
+
+    group_by_id = 'prop_country_id'
+    cheat_sheet = make_generic_cheat_sheet(df, group_by_id)
+    file_stream = open('cheat_sheet_prop_country_id.pkl', 'wb')
+    pickle.dump(cheat_sheet, file_stream)
+    print("prop_country_id_cheats_sheet made")
 
     print("done")

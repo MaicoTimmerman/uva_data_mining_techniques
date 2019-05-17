@@ -9,7 +9,9 @@ from data_preprocess import prepare_for_mart
 
 
 def train_and_save():
-    dataset = "tiny_train"
+    val_dataset = "tiny_train"
+    dataset = "training_set_VU_DM"
+    dataset = "tenth_train"
 
     if not os.path.exists(f"{dataset}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
@@ -21,22 +23,39 @@ def train_and_save():
         with open(f"{dataset}.pkl", "rb") as f:
             features, relevancies, search_ids, _ = pickle.load(f)
 
+
+    if not os.path.exists(f"{val_dataset}.pkl"):
+        val_features, val_relevancies, val_search_ids, val_prop_ids = prepare_for_mart(
+            path=f"../data/{val_dataset}.csv", is_train_set=True)
+
+        with open(f"{val_dataset}.pkl", "wb") as f:
+            pickle.dump((val_features, val_relevancies, val_search_ids, val_prop_ids), f)
+    else:
+        with open(f"{val_dataset}.pkl", "rb") as f:
+            val_features, val_relevancies, val_search_ids, _ = pickle.load(f)
+
     metric = pyltr.metrics.NDCG(k=10)
 
     # Only needed if you want to perform validation (early stopping & trimming)
     monitor = pyltr.models.monitors.ValidationMonitor(
-        features, relevancies, search_ids, metric=metric, stop_after=250)
+        val_features, val_relevancies, val_search_ids, metric=metric, stop_after=250)
 
     model = pyltr.models.LambdaMART(
         metric=metric,
-        n_estimators=25,
+        n_estimators=1000,
         learning_rate=0.02,
-        max_features=0.5,
+        max_features=0.7,
+        subsample=1.0,
+        min_samples_split=2,
+        max_depth=4,
         query_subsample=0.5,
-        max_leaf_nodes=10,
+        max_leaf_nodes=25,
         min_samples_leaf=64,
         verbose=1,
     )
+    with open("training_curves.csv", 'w') as f:
+        blah = csv.writer(f, delimiter=';')
+        blah.writerow(['Iter', 'Train score', 'OOB Improve', 'remaining_time', 'monitor_output'])
 
     model.fit(features, relevancies, search_ids, monitor=monitor)
 
@@ -58,7 +77,7 @@ def predict_generate():
         with open(f"{dataset}.pkl", "rb") as f:
             features, relevancies, search_ids, prop_ids = pickle.load(f)
 
-    with open(f"model_tiny_train.pkl", "rb") as f:
+    with open(f"model_tenth_train.pkl", "rb") as f:
         model: pyltr.models.LambdaMART = pickle.load(f)
 
     Ey = model.predict(features)

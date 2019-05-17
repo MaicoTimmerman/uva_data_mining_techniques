@@ -91,6 +91,7 @@ def load_the_datas(filename='tiny_train.csv', is_train_set=True):
     return df
 
 def add_circular_day_of_year_features (df):
+    pd.options.mode.chained_assignment = None  # default='warn'
     df['time_of_check_in'] = df['date_time'] + df['srch_booking_window'].apply(lambda x: timedelta(x))
     df['time_of_check_out'] = df['time_of_check_in'] + df['srch_length_of_stay'].apply(lambda x: timedelta(x))
     booking_doys = df['date_time'].apply(lambda x: x.timetuple().tm_yday) / 365
@@ -102,14 +103,17 @@ def add_circular_day_of_year_features (df):
     df['cos_day_of_year_check_in'] = np.cos(2*np.pi*check_in_doys)
     df['sin_day_of_year_check_out'] = np.sin(2*np.pi*check_out_doys)
     df['cos_day_of_year_check_out'] = np.cos(2*np.pi*check_out_doys)
+    pd.options.mode.chained_assignment = 'warn'
     return df
 
 def add_seasons(df):
+    pd.options.mode.chained_assignment = None  # default='warn'
+
     df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([3,4,5]), 1, 0)
     df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([6,7,8]), 1, 0)
     df['AUTUMN'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([9,10,11]), 1, 0)
     df['WINTER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([12,1,2]), 1, 0)
-
+    pd.options.mode.chained_assignment = 'warn'
     return df
 
 def average_competitors(df):
@@ -153,6 +157,7 @@ def cluster_hotel_countries(df, k=4):
     """
     # Convert DataFrame to matrix
     mat = df.groupby("prop_country_id").price_usd.describe()[['mean','std']]
+    mat.rename(columns = {"mean": 'prop_country_id_price_usd_mean', 'std': 'prop_country_id_price_usd_std'}, inplace=True)
     # Using sklearn
     km = cluster.KMeans(n_clusters=k)
     # print(mat.isna().sum().sort_values())
@@ -163,15 +168,14 @@ def cluster_hotel_countries(df, k=4):
     # Format results as a DataFrame
     results = pd.DataFrame([df.groupby("prop_country_id").price_usd.describe()[['mean','std']].index,labels]).T
 
+    pd.options.mode.chained_assignment = None  # default='warn'
     df["country_cluster"] = results.set_index(0).loc[df.prop_country_id].values
 
     for one_hot_index in range(df["country_cluster"].max() + 1):
         variable_name = "hotel_country_cluster_" + str(one_hot_index)
         df[variable_name] = (df["country_cluster"] == one_hot_index).astype(int)
 
-    df["hotel_country_mean_price"] = mat.loc[df.prop_country_id]['mean'].values
-    df["hotel_country_std_price"] = mat.loc[df.prop_country_id]['std'].values
-
+    pd.options.mode.chained_assignment = 'warn'
     return df
 
 def id_hacking(df):
@@ -179,35 +183,35 @@ def id_hacking(df):
         First make the cheat sheets with the create_cheat_sheet
         Then you can load in the data
     """
+    def fill_with_cheats(df, pickle_file):
+
+
+        file_stream = open(pickle_file, 'rb')
+        cheat_sheet = pickle.load(file_stream)
+
+        df = df.merge(cheat_sheet, how='left', left_on=cheat_sheet.index.name, right_on=cheat_sheet.index.name)
+
+        for variable_name in cheat_sheet.columns:
+            # print(variable_name)
+            # pd.merge(left=survey_sub,right=species_sub, how='left', left_on='species_id', right_on='species_id')
+            # df[variable_name] = cheat_sheet.loc[df.visitor_location_country_id][variable_name].values
+            df.fillna({variable_name: 0}, inplace=True)
+        return df
 
     file_stream = open('../data/cheat_sheet_prop_id.pkl', 'rb')
     cheat_sheet = pickle.load(file_stream)
-    df["hotel_position_mean"] = cheat_sheet.loc[df.prop_id]['mean'].values
-    df["hotel_position_std"] = cheat_sheet.loc[df.prop_id]['std'].values
-    df["hotel_clicked_ratio"] = cheat_sheet.loc[df.prop_id]['click_ratio'].values
-    df["hotel_booked_ratio"] = cheat_sheet.loc[df.prop_id]['book_ratio'].values
 
-    df.fillna({ 'hotel_position_mean': 40, 'hotel_position_std': 0,
-                'hotel_clicked_ratio': 0, 'hotel_booked_ratio': 0,}, inplace=True)
+    df = df.reset_index()
+    df = df.merge(cheat_sheet, how='left', left_on=cheat_sheet.index.name, right_on=cheat_sheet.index.name)
 
-    file_stream = open('../data/cheat_sheet_visitor_location_country_id.pkl', 'rb')
-    cheat_sheet = pickle.load(file_stream)
-    df["user_country_mean_spending"] = cheat_sheet.loc[df.visitor_location_country_id]['mean'].values
-    df["user_country_std_spending"] = cheat_sheet.loc[df.visitor_location_country_id]['std'].values
-    df.fillna({'user_country_mean_spending': 0, 'user_country_std_spending': 0}, inplace=True)
+    df.fillna({ 'prop_id_position_mean': 40, 'prop_id_position_std': 0,
+                'prop_id_clicked_ratio': 0, 'prop_id_book_ratio': 0,}, inplace=True)
+    df = fill_with_cheats(df, '../data/cheat_sheet_visitor_location_country_id.pkl')
+    df = fill_with_cheats(df, '../data/cheat_sheet_site_id.pkl')
+    df = fill_with_cheats(df, '../data/cheat_sheet_srch_destination_id.pkl')
+    df = fill_with_cheats(df, '../data/cheat_sheet_prop_country_id.pkl')
 
-    file_stream = open('../data/cheat_sheet_site_id.pkl', 'rb')
-    cheat_sheet = pickle.load(file_stream)
-    df["site_id_mean"] = cheat_sheet.loc[df.site_id]['mean'].values
-    df["site_id_std"] = cheat_sheet.loc[df.site_id]['std'].values
-    df.fillna({'site_id_mean': 0, 'site_id_std': 0}, inplace=True)
-
-    file_stream = open('../data/cheat_sheet_srch_destination_id.pkl', 'rb')
-    cheat_sheet = pickle.load(file_stream)
-    df["srch_destination_id_mean"] = cheat_sheet.loc[df.srch_destination_id]['mean'].values
-    df["srch_destination_id_std"] = cheat_sheet.loc[df.srch_destination_id]['std'].values
-    df.fillna({'srch_destination_id_mean': 0, 'srch_destination_id_std': 0}, inplace=True)
-
+    df.set_index(['srch_id', 'position'], inplace=True)
     return df
 
 def outlier_killer(df):
@@ -340,7 +344,7 @@ def preprocess(df, is_train_set):
     df = add_seasons(df)
     df = id_hacking(df)
 
-    df = normalizer(df)
+    # df = normalizer(df) its broken and I don't want to fix it :)
     if is_train_set:
         df = add_relevance_labels(df)
         # df = balance_relevancies(df)
@@ -362,9 +366,9 @@ def make_plots (df):
 if __name__ == "__main__":
     path = '../data/tiny_train.csv'
 
-    x, y, srch_ids, prop_ids = prepare_for_mart(path)
-
-    exit(-1)
+    # x, y, srch_ids, prop_ids = prepare_for_mart(path)
+    #
+    # exit(-1)
     # path = '../data/tenth_train.csv'
 
     path = '../data/tenth_train.csv'
@@ -388,6 +392,6 @@ if __name__ == "__main__":
 
     # make_plots(df)
 
-    df = normalizer(df)
+    # df = normalizer(df)
     df.info()
     print("done")
