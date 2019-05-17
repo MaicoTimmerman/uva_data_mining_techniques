@@ -109,7 +109,7 @@ def prop_id_cheats_sheet(df):
 
     name_for_std = group_by_id + '_' + 'position' + '_std'
     cheat_cheet = temp_df.groupby('prop_id')['position'].describe()[['std']]
-    cheat_cheet.rename(columns = {"mean": name_for_std}, inplace=True)
+    cheat_cheet.rename(columns = {"std": name_for_std}, inplace=True)
 
     cheat_cheet['prop_id_position_mean'] = temp_df.groupby('prop_id')['position'].describe()[['mean']]
     cheat_cheet['prop_id_book_ratio'] = temp_df.groupby('prop_id')['booking_bool'].sum()/temp_df.groupby('prop_id')['booking_bool'].count()
