@@ -204,6 +204,7 @@ def id_hacking(df):
     df = df.reset_index()
     df = df.merge(cheat_sheet, how='left', left_on=cheat_sheet.index.name, right_on=cheat_sheet.index.name)
 
+    print(f"Prop_id cheat sheet left {df.isnull().sum(axis=1)} NaNs to be removed")
     df.fillna({ 'prop_id_position_mean': 40, 'prop_id_position_std': 0,
                 'prop_id_clicked_ratio': 0, 'prop_id_book_ratio': 0,}, inplace=True)
     df = fill_with_cheats(df, '../data/cheat_sheet_visitor_location_country_id.pkl')
