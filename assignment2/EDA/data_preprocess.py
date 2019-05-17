@@ -4,6 +4,9 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from sklearn import cluster
+from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import argparse
 from pathlib import Path
 
@@ -135,6 +138,7 @@ def remove_nans(df):
         for competitors we set to 0, because yea, no competition no problem
     """
 
+    print(f"{df.isnull().values.any(axis=1).sum()} rows with NaNs in dataset after competitor averaging to be filled.")
     values = {  'visitor_hist_starrating': -1,
                 'visitor_hist_adr_usd': -1,
                 'prop_review_score': -1,
@@ -212,7 +216,8 @@ def id_hacking(df):
     df = fill_with_cheats(df, '../data/cheat_sheet_srch_destination_id.pkl')
     df = fill_with_cheats(df, '../data/cheat_sheet_prop_country_id.pkl')
 
-    df.set_index(['srch_id', 'position'], inplace=True)
+    # df.set_index(['srch_id', 'position'], inplace=True)
+
     return df
 
 def outlier_killer(df):
@@ -317,12 +322,38 @@ def drop_non_features(df, is_train_set):
     df.drop(shit_to_drop, axis=1, inplace=True)
     return df
 
+def apply_PCA (matrix, is_train_set):
+    if is_train_set:
+        # normalize data
+        scaler = StandardScaler()
+        scaler.fit(matrix)
+        normalized_matrix = scaler.transform(matrix)
+
+        # apply PCA
+        pca = PCA(.95)
+        pca.fit(normalized_matrix)
+        projected_matrix = pca.transform(normalized_matrix)
+
+        # save normalization and PCA transformations
+        with open('PCA.pkl', 'wb') as f:
+            pickle.dump((scaler, pca), f)
+    else:
+        with open('PCA.pkl', 'rb') as f:
+            scaler, pca = pickle.load(f)
+            normalized_matrix = scaler.transform(matrix)
+            projected_matrix = pca.transform(normalized_matrix)
+
+    print(f"PCA reduced {matrix.shape[1]} dimensions to {pca.n_components_} components "
+          f"and retained {pca.explained_variance_ratio_.sum() * 100.0:.2f}% of the variance.")
+    return projected_matrix
+
 def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = load_the_datas(path, is_train_set=is_train_set)
     df.info()
     df = preprocess(df, is_train_set=is_train_set)
 
-    srch_ids = df.index.get_level_values('srch_id').to_numpy()
+    # srch_ids = df.index.get_level_values('srch_id').to_numpy()
+    srch_ids = df['srch_id'].to_numpy()
     prop_ids = df['prop_id'].to_numpy()
     relevancies = np.array(1)
     if is_train_set:
@@ -331,7 +362,7 @@ def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = drop_non_features(df, is_train_set=is_train_set)
     df.info()
 
-    features = df.to_numpy()
+    features = apply_PCA(df.to_numpy(), is_train_set)
     return features, relevancies, srch_ids, prop_ids
 
 
@@ -349,6 +380,7 @@ def preprocess(df, is_train_set):
     if is_train_set:
         df = add_relevance_labels(df)
         # df = balance_relevancies(df)
+
     return df
 
 def make_plots (df):
