@@ -8,10 +8,10 @@ def prop_id_overlap (file1, file2):
 
 def print_overlap (set1, set2):
     matches, len1, len2 = prop_id_overlap(set1, set2)
-    print(f"{matches} out of {len2} from {set2} are present in {set1}. That is an overlap of {100.0*matches/len2:.2f}%.")
+    print(f"{matches} out of {len2} prop_ids from {set2} are present in {set1}. That is an overlap of {100.0*matches/len2:.2f}%.")
 
 print_overlap('tiny_train.csv', 'tiny_test.csv')
 print_overlap('training_set_VU_DM.csv', 'test_set_VU_DM.csv')
 
-# 11562 out of 24754 from tiny_test.csv are present in tiny_train.csv. That is an overlap of 46.71%.
-# 4945334 out of 4959183 from test_set_VU_DM.csv are present in training_set_VU_DM.csv. That is an overlap of 99.72%.
+# 11562 out of 24754 prop_ids from tiny_test.csv are present in tiny_train.csv. That is an overlap of 46.71%.
+# 4945334 out of 4959183 prop_ids from test_set_VU_DM.csv are present in training_set_VU_DM.csv. That is an overlap of 99.72%.
