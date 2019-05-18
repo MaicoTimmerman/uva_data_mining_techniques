@@ -254,14 +254,28 @@ def balance_relevancies (df):
     return df
 
 
-def balance_sampling(df):
-    print(f"Removing all but 5 negative samples from {df.shape} dataframe.")
-    for srch_id, df2 in df.groupby('srch_id'):
+def balance_sampling(df, n=10):
+    print(f"Take top {n} positions and add clicked samples from {df.shape} dataframe.")
+    # for srch_id, df2 in df.groupby('srch_id'):
+    #
+    #     df.drop(index=df2[df2['relevance'] == 0][5:].index.values,
+    #             axis=1, inplace=True)
 
-        df.drop(index=df2[df2['relevance'] == 0][5:].index.values,
-                axis=1, inplace=True)
-    print(f"New dataframe has size {df.shape}.")
+    df.reset_index(inplace=True)
+    df_new = df.groupby("srch_id").position.nsmallest(n, keep='first')
+    df_new = df_new.reset_index().drop("level_1", axis=1)
 
+    df_new.set_index(['srch_id', 'position'], inplace=True)
+    df_new.sort_index(level=['srch_id', 'position'], inplace=True)
+
+    df.set_index(['srch_id', 'position'], inplace=True)
+    df.sort_index(level=['srch_id', 'position'], inplace=True)
+
+    df_new = df_new.join(df)
+    df_new = df_new.combine_first(df[df['click_bool'] == 1])
+
+    print(f"New dataframe has size {df_new.shape}.")
+    return df_new
 
 def normalizer(df, normalize=True):
 
