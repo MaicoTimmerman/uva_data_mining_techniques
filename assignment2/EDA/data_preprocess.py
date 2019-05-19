@@ -200,6 +200,7 @@ def id_hacking(df):
             # pd.merge(left=survey_sub,right=species_sub, how='left', left_on='species_id', right_on='species_id')
             # df[variable_name] = cheat_sheet.loc[df.visitor_location_country_id][variable_name].values
             df.fillna({variable_name: 0}, inplace=True)
+        print("finished merging {} with dataframe".format(pickle_file))
         return df
 
     file_stream = open('../data/cheat_sheet_prop_id.pkl', 'rb')
@@ -273,7 +274,7 @@ def balance_sampling(df, n=10):
 
     df_new = df_new.join(df)
     df_new = df_new.combine_first(df[df['click_bool'] == 1])
-
+    df_new = df_new.reset_index().drop("index", axis=1)
     print(f"New dataframe has size {df_new.shape}.")
     return df_new
 
