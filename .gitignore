@@ -42,3 +42,9 @@ assignment2/EDA/preprocessed_data\.pkl
 assignment2/models/training_curves\.csv
 
 assignment2/data/\.ipynb_checkpoints/exploration-checkpoint\.ipynb
+
+assignment2/data/90_test\.csv
+
+assignment2/data/90_train\.csv
+
+assignment2/data/90_valid\.csv
