@@ -212,6 +212,7 @@ def id_hacking(df):
     print(f"Prop_id cheat sheet left {df.isnull().values.any(axis=1).sum()} rows with NaNs to be removed")
     df.fillna({ 'prop_id_position_mean': 40, 'prop_id_position_std': 0,
                 'prop_id_clicked_ratio': 0, 'prop_id_book_ratio': 0,}, inplace=True)
+
     df = fill_with_cheats(df, '../data/cheat_sheet_visitor_location_country_id.pkl')
     df = fill_with_cheats(df, '../data/cheat_sheet_site_id.pkl')
     df = fill_with_cheats(df, '../data/cheat_sheet_srch_destination_id.pkl')
@@ -378,6 +379,7 @@ def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = preprocess(df, is_train_set=is_train_set)
 
     # srch_ids = df.index.get_level_values('srch_id').to_numpy()
+    df.reset_index(inplace=True)
     srch_ids = df['srch_id'].to_numpy()
     prop_ids = df['prop_id'].to_numpy()
     relevancies = np.array(1)
@@ -404,7 +406,7 @@ def preprocess(df, is_train_set):
     # df = normalizer(df) its broken and I don't want to fix it :)
     if is_train_set:
         df = add_relevance_labels(df)
-        df = balance_sampling(df)
+        # df = balance_sampling(df)
         # df = balance_relevancies(df)
 
     return df
@@ -430,7 +432,7 @@ if __name__ == "__main__":
     # exit(-1)
     # path = '../data/tenth_train.csv'
 
-    path = '../data/tenth_train.csv'
+    # path = '../data/tenth_train.csv'
 
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
     parser.add_argument('--force_preprocess', action='store_true')
