@@ -38,3 +38,7 @@ assignment2/models/tenth_train\.pkl
 assignment2/models/model_training_set_VU_DM\.pkl
 
 assignment2/EDA/preprocessed_data\.pkl
+
+assignment2/models/training_curves\.csv
+
+assignment2/data/\.ipynb_checkpoints/exploration-checkpoint\.ipynb

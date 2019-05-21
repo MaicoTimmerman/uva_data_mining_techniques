@@ -195,11 +195,14 @@ def id_hacking(df):
 
         df = df.merge(cheat_sheet, how='left', left_on=cheat_sheet.index.name, right_on=cheat_sheet.index.name)
 
-        for variable_name in cheat_sheet.columns:
+        cheat_temp = ['price_usd']
+        # for variable_name in cheat_sheet.columns:
+        for variable_name in cheat_temp:
             # print(variable_name)
             # pd.merge(left=survey_sub,right=species_sub, how='left', left_on='species_id', right_on='species_id')
             # df[variable_name] = cheat_sheet.loc[df.visitor_location_country_id][variable_name].values
             df.fillna({variable_name: 0}, inplace=True)
+        print("finished merging {} with dataframe".format(pickle_file))
         return df
 
     file_stream = open('../data/cheat_sheet_prop_id.pkl', 'rb')
@@ -211,6 +214,7 @@ def id_hacking(df):
     print(f"Prop_id cheat sheet left {df.isnull().values.any(axis=1).sum()} rows with NaNs to be removed")
     df.fillna({ 'prop_id_position_mean': 40, 'prop_id_position_std': 0,
                 'prop_id_clicked_ratio': 0, 'prop_id_book_ratio': 0,}, inplace=True)
+
     df = fill_with_cheats(df, '../data/cheat_sheet_visitor_location_country_id.pkl')
     df = fill_with_cheats(df, '../data/cheat_sheet_site_id.pkl')
     df = fill_with_cheats(df, '../data/cheat_sheet_srch_destination_id.pkl')
@@ -254,14 +258,28 @@ def balance_relevancies (df):
     return df
 
 
-def balance_sampling(df):
-    print(f"Removing all but 5 negative samples from {df.shape} dataframe.")
-    for srch_id, df2 in df.groupby('srch_id'):
+def balance_sampling(df, n=10):
+    print(f"Take top {n} positions and add clicked samples from {df.shape} dataframe.")
+    # for srch_id, df2 in df.groupby('srch_id'):
+    #
+    #     df.drop(index=df2[df2['relevance'] == 0][5:].index.values,
+    #             axis=1, inplace=True)
 
-        df.drop(index=df2[df2['relevance'] == 0][5:].index.values,
-                axis=1, inplace=True)
-    print(f"New dataframe has size {df.shape}.")
+    df.reset_index(inplace=True)
+    df_new = df.groupby("srch_id").position.nsmallest(n, keep='first')
+    df_new = df_new.reset_index().drop("level_1", axis=1)
 
+    df_new.set_index(['srch_id', 'position'], inplace=True)
+    df_new.sort_index(level=['srch_id', 'position'], inplace=True)
+
+    df.set_index(['srch_id', 'position'], inplace=True)
+    df.sort_index(level=['srch_id', 'position'], inplace=True)
+
+    df_new = df_new.join(df)
+    df_new = df_new.combine_first(df[df['click_bool'] == 1])
+    df_new = df_new.reset_index().drop("index", axis=1)
+    print(f"New dataframe has size {df_new.shape}.")
+    return df_new
 
 def normalizer(df, normalize=True):
 
@@ -363,6 +381,7 @@ def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
     df = preprocess(df, is_train_set=is_train_set)
 
     # srch_ids = df.index.get_level_values('srch_id').to_numpy()
+    df.reset_index(inplace=True)
     srch_ids = df['srch_id'].to_numpy()
     prop_ids = df['prop_id'].to_numpy()
     relevancies = np.array(1)
@@ -389,7 +408,7 @@ def preprocess(df, is_train_set):
     # df = normalizer(df) its broken and I don't want to fix it :)
     if is_train_set:
         df = add_relevance_labels(df)
-        df = balance_sampling(df)
+        # df = balance_sampling(df)
         # df = balance_relevancies(df)
 
     return df
@@ -413,9 +432,9 @@ if __name__ == "__main__":
     # x, y, srch_ids, prop_ids = prepare_for_mart(path)
     #
     # exit(-1)
-    # path = '../data/tenth_train.csv'
-
     path = '../data/tenth_train.csv'
+
+    # path = '../data/tenth_train.csv'
 
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')
     parser.add_argument('--force_preprocess', action='store_true')
@@ -434,7 +453,7 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    # make_plots(df)
+    make_plots(df)
 
     # df = normalizer(df)
     df.info()

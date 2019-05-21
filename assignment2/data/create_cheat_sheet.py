@@ -71,15 +71,15 @@ def outlier_killer(df):
 
 def make_generic_cheat_sheet(df, group_by_id, variables_to_average = None):
 
-    df_to_use = df.loc[df['booking_bool'] == 1].groupby(group_by_id)
-
+    # df_to_use = df.loc[df['booking_bool'] == 1].groupby(group_by_id)
+    df_to_use = df.groupby(group_by_id)
     if (variables_to_average == None):
         variables_to_average = ['srch_children_count', 'srch_adults_count',
                                 'srch_booking_window', 'srch_length_of_stay',
                                 'srch_query_affinity_score', 'orig_destination_distance',
                                 'prop_location_score2', 'prop_location_score1',
                                 'prop_review_score', 'prop_starrating', 'price_usd']
-
+        variables_to_average = ['price_usd']
     name_for_std = group_by_id + '_' + 'price_usd' + '_std'
     cheat_cheet = df_to_use.price_usd.describe()[['std']]
     cheat_cheet.rename(columns = {"std": name_for_std}, inplace=True)
