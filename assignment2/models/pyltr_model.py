@@ -23,7 +23,7 @@ def train_and_save(training_set, validation_set, model_name):
 
     if not os.path.exists(f"{validation_set}.pkl"):
         val_features, val_relevancies, val_search_ids, val_prop_ids = prepare_for_mart(
-            path=f"../data/{validation_set}.csv", is_train_set=True)
+            path=f"../data/{validation_set}.csv", is_train_set=False)
 
         with open(f"{validation_set}.pkl", "wb") as f:
             pickle.dump((val_features, val_relevancies, val_search_ids, val_prop_ids), f)
@@ -93,8 +93,8 @@ def predict_generate(test_set, model_name, output_name):
 
 
 if __name__ == '__main__':
-    validation_set = "90_valid"
     training_set = "90_train"
+    validation_set = "90_valid"
     test_set = "test_set_VU_DM"
     model_name = f"model_{training_set}"
     output_name = f"output_{model_name}_{test_set}"
