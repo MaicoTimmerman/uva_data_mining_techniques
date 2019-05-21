@@ -8,30 +8,27 @@ import pyltr
 from data_preprocess import prepare_for_mart
 
 
-def train_and_save():
-    val_dataset = "tiny_train"
-    dataset = "training_set_VU_DM"
-    dataset = "tenth_train"
+def train_and_save(training_set, validation_set, model_name):
 
-    if not os.path.exists(f"{dataset}.pkl"):
+    if not os.path.exists(f"{training_set}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
-            path=f"../data/{dataset}.csv", is_train_set=True)
+            path=f"../data/{training_set}.csv", is_train_set=True)
 
-        with open(f"{dataset}.pkl", "wb") as f:
+        with open(f"{training_set}.pkl", "wb") as f:
             pickle.dump((features, relevancies, search_ids, prop_ids), f)
     else:
-        with open(f"{dataset}.pkl", "rb") as f:
+        with open(f"{training_set}.pkl", "rb") as f:
             features, relevancies, search_ids, _ = pickle.load(f)
 
 
-    if not os.path.exists(f"{val_dataset}.pkl"):
+    if not os.path.exists(f"{validation_set}.pkl"):
         val_features, val_relevancies, val_search_ids, val_prop_ids = prepare_for_mart(
-            path=f"../data/{val_dataset}.csv", is_train_set=True)
+            path=f"../data/{validation_set}.csv", is_train_set=True)
 
-        with open(f"{val_dataset}.pkl", "wb") as f:
+        with open(f"{validation_set}.pkl", "wb") as f:
             pickle.dump((val_features, val_relevancies, val_search_ids, val_prop_ids), f)
     else:
-        with open(f"{val_dataset}.pkl", "rb") as f:
+        with open(f"{validation_set}.pkl", "rb") as f:
             val_features, val_relevancies, val_search_ids, _ = pickle.load(f)
 
     metric = pyltr.metrics.NDCG(k=10)
@@ -42,14 +39,14 @@ def train_and_save():
 
     model = pyltr.models.LambdaMART(
         metric=metric,
-        n_estimators=1000,
+        n_estimators=10000,
         learning_rate=0.02,
         max_features=0.7,
         subsample=1.0,
-        min_samples_split=2,
-        max_depth=4,
-        query_subsample=0.5,
-        max_leaf_nodes=25,
+        min_samples_split=16,
+        max_depth=7,
+        query_subsample=1.0,
+        max_leaf_nodes=None,
         min_samples_leaf=64,
         verbose=1,
     )
@@ -59,25 +56,24 @@ def train_and_save():
 
     model.fit(features, relevancies, search_ids, monitor=monitor)
 
-    with open(f"model_{dataset}.pkl", "wb") as f:
+    with open(f"{model_name}.pkl", "wb") as f:
         pickle.dump(model, f)
 
 
-def predict_generate():
-    dataset = "test_set_VU_DM"
-    # dataset = "tiny_test"
+def predict_generate(test_set, model_name, output_name):
 
-    if not os.path.exists(f"{dataset}.pkl"):
+    if not os.path.exists(f"{test_set}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
-            path=f"../data/{dataset}.csv", is_train_set=False)
+            path=f"../data/{test_set}.csv", is_train_set=False)
 
-        with open(f"{dataset}.pkl", "wb") as f:
+        with open(f"{test_set}.pkl", "wb") as f:
             pickle.dump((features, relevancies, search_ids, prop_ids), f)
     else:
-        with open(f"{dataset}.pkl", "rb") as f:
+        with open(f"{test_set}.pkl", "rb") as f:
             features, relevancies, search_ids, prop_ids = pickle.load(f)
 
-    with open(f"model_tenth_train.pkl", "rb") as f:
+
+    with open(f"{model_name}.pkl", "rb") as f:
         model: pyltr.models.LambdaMART = pickle.load(f)
 
     Ey = model.predict(features)
@@ -86,7 +82,7 @@ def predict_generate():
                        'srch_ids': search_ids,
                        'prop_ids': prop_ids}) \
         .sort_values(['relevancies'], ascending=False)
-    with open(f"output_{dataset}.txt", "w", newline='') as f:
+    with open(f"{output_name}.txt", "w", newline='') as f:
         csv_writer = csv.DictWriter(f, ["srch_id", "prop_id"])
         csv_writer.writeheader()
 
@@ -97,5 +93,10 @@ def predict_generate():
 
 
 if __name__ == '__main__':
-    train_and_save()
-    predict_generate()
+    validation_set = "90_valid"
+    training_set = "90_train"
+    test_set = "test_set_VU_DM"
+    model_name = f"model_{training_set}"
+    output_name = f"output_{model_name}_{test_set}"
+    train_and_save(training_set, validation_set, model_name)
+    predict_generate(test_set, model_name, output_name)
