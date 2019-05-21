@@ -24,7 +24,7 @@ from visualization import   scatterplotter, \
 """XGboost?"""
 
 
-def load_the_datas(filename='tiny_train.csv', is_train_set=True):
+def load_the_datas(filename, set_type):
     types = {'srch_id': int,
              'site_id': int,
              'visitor_location_country_id': int,
@@ -75,11 +75,11 @@ def load_the_datas(filename='tiny_train.csv', is_train_set=True):
              'comp8_inv': 'Int64',
              'comp8_rate_percent_diff': float}
 
-    if is_train_set:
+    if set_type == "training" or set_type == "validation":
         types.update({
             'click_bool': int,
             'booking_bool': int,
-            'gross_booking_uds': float,
+            'gross_bookings_usd': float,
         })
         index_cols = ['srch_id', 'position']
     else:
@@ -88,7 +88,11 @@ def load_the_datas(filename='tiny_train.csv', is_train_set=True):
     df = pd.read_csv(filename, dtype=types, index_col=index_cols,
                      parse_dates=parse_dates)
 
-    if is_train_set:
+    are_training_columns_present = "position" in df.columns
+    if set_type == "test" and are_training_columns_present:
+        df.drop(columns=["position", "booking_bool", "click_bool", "gross_bookings_usd"], inplace=True)
+
+    if set_type == "training" or set_type == "validation":
         df.sort_index(level=['srch_id', 'position'], inplace=True)
 
     return df
@@ -321,7 +325,7 @@ def add_relevance_labels (df):
     df['relevance'] = df.apply(relevance, axis=1)
     return df
 
-def drop_non_features(df, is_train_set):
+def drop_non_features(df, set_type):
     df.reset_index(inplace=True)
     shit_to_drop = [
         'srch_id',
@@ -336,7 +340,7 @@ def drop_non_features(df, is_train_set):
         'date_time'
     ]
 
-    if is_train_set:
+    if set_type == "training" or set_type == "validation":
         shit_to_drop += ['booking_bool',
                          'click_bool',
                          'position',
@@ -345,8 +349,9 @@ def drop_non_features(df, is_train_set):
     df.drop(shit_to_drop, axis=1, inplace=True)
     return df
 
-def apply_PCA (matrix, is_train_set):
-    if is_train_set:
+def apply_PCA (df, set_type):
+    matrix = df.to_numpy()
+    if set_type == "training":
         # normalize data
         scaler = StandardScaler()
         scaler.fit(matrix)
@@ -370,27 +375,25 @@ def apply_PCA (matrix, is_train_set):
           f"and retained {pca.explained_variance_ratio_.sum() * 100.0:.2f}% of the variance.")
     return projected_matrix
 
-def prepare_for_mart(path='tiny_train.csv', is_train_set=True):
-    df = load_the_datas(path, is_train_set=is_train_set)
-    df.info()
-    df = preprocess(df, is_train_set=is_train_set)
+def prepare_for_mart(path, set_type):
+    df = load_the_datas(path, set_type=set_type)
+    df = preprocess(df, set_type=set_type)
 
     # srch_ids = df.index.get_level_values('srch_id').to_numpy()
     df.reset_index(inplace=True)
     srch_ids = df['srch_id'].to_numpy()
     prop_ids = df['prop_id'].to_numpy()
     relevancies = np.array(1)
-    if is_train_set:
+    if set_type == "training" or set_type == "validation":
         relevancies = df['relevance'].to_numpy()
 
-    df = drop_non_features(df, is_train_set=is_train_set)
-    df.info()
+    df = drop_non_features(df, set_type=set_type)
 
-    features = apply_PCA(df.to_numpy(), is_train_set)
+    features = apply_PCA(df, set_type=set_type)
     return features, relevancies, srch_ids, prop_ids
 
 
-def preprocess(df, is_train_set):
+def preprocess(df, set_type):
     df = average_competitors(df)
     df = count_nan_feature(df)
     df = remove_nans(df)
@@ -401,7 +404,7 @@ def preprocess(df, is_train_set):
     df = id_hacking(df)
 
     # df = normalizer(df) its broken and I don't want to fix it :)
-    if is_train_set:
+    if set_type == "training" or set_type == "validation":
         df = add_relevance_labels(df)
         # df = balance_sampling(df)
         # df = balance_relevancies(df)
@@ -427,7 +430,7 @@ if __name__ == "__main__":
     # x, y, srch_ids, prop_ids = prepare_for_mart(path)
     #
     # exit(-1)
-    path = '../data/tenth_train.csv'
+    # path = '../data/tenth_train.csv'
 
     # path = '../data/tenth_train.csv'
 
@@ -437,8 +440,8 @@ if __name__ == "__main__":
 
     preprocessed_dataset_file = Path("preprocessed_data.pkl")
     if not preprocessed_dataset_file.exists() or args.force_preprocess:
-        df = load_the_datas(path)
-        df = preprocess(df, True)
+        df = load_the_datas(path, set_type="training")
+        df = preprocess(df, set_type="training")
 
         file_stream = open(preprocessed_dataset_file, 'wb')
         pickle.dump(df, file_stream)
@@ -448,7 +451,7 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    make_plots(df)
+    # make_plots(df)
 
     # df = normalizer(df)
     df.info()

@@ -12,7 +12,7 @@ def train_and_save(training_set, validation_set, model_name):
 
     if not os.path.exists(f"{training_set}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
-            path=f"../data/{training_set}.csv", is_train_set=True)
+            path=f"../data/{training_set}.csv", set_type="training")
 
         with open(f"{training_set}.pkl", "wb") as f:
             pickle.dump((features, relevancies, search_ids, prop_ids), f)
@@ -23,7 +23,7 @@ def train_and_save(training_set, validation_set, model_name):
 
     if not os.path.exists(f"{validation_set}.pkl"):
         val_features, val_relevancies, val_search_ids, val_prop_ids = prepare_for_mart(
-            path=f"../data/{validation_set}.csv", is_train_set=False)
+            path=f"../data/{validation_set}.csv", set_type="validation")
 
         with open(f"{validation_set}.pkl", "wb") as f:
             pickle.dump((val_features, val_relevancies, val_search_ids, val_prop_ids), f)
@@ -64,7 +64,7 @@ def predict_generate(test_set, model_name, output_name):
 
     if not os.path.exists(f"{test_set}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
-            path=f"../data/{test_set}.csv", is_train_set=False)
+            path=f"../data/{test_set}.csv", set_type="test")
 
         with open(f"{test_set}.pkl", "wb") as f:
             pickle.dump((features, relevancies, search_ids, prop_ids), f)
