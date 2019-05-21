@@ -71,8 +71,8 @@ def outlier_killer(df):
 
 def make_generic_cheat_sheet(df, group_by_id, variables_to_average = None):
 
-    df_to_use = df.loc[df['booking_bool'] == 1].groupby(group_by_id)
-
+    # df_to_use = df.loc[df['booking_bool'] == 1].groupby(group_by_id)
+    df_to_use = df.groupby(group_by_id)
     if (variables_to_average == None):
         variables_to_average = ['srch_children_count', 'srch_adults_count',
                                 'srch_booking_window', 'srch_length_of_stay',
