@@ -195,7 +195,9 @@ def id_hacking(df):
 
         df = df.merge(cheat_sheet, how='left', left_on=cheat_sheet.index.name, right_on=cheat_sheet.index.name)
 
-        for variable_name in cheat_sheet.columns:
+        cheat_temp = ['price_usd']
+        # for variable_name in cheat_sheet.columns:
+        for variable_name in cheat_temp:
             # print(variable_name)
             # pd.merge(left=survey_sub,right=species_sub, how='left', left_on='species_id', right_on='species_id')
             # df[variable_name] = cheat_sheet.loc[df.visitor_location_country_id][variable_name].values
@@ -430,7 +432,7 @@ if __name__ == "__main__":
     # x, y, srch_ids, prop_ids = prepare_for_mart(path)
     #
     # exit(-1)
-    # path = '../data/tenth_train.csv'
+    path = '../data/tenth_train.csv'
 
     # path = '../data/tenth_train.csv'
 
@@ -451,7 +453,7 @@ if __name__ == "__main__":
         df = pickle.load(file_stream)
         print(f'Loaded preprocessed dataset from \'{preprocessed_dataset_file}\'.')
 
-    # make_plots(df)
+    make_plots(df)
 
     # df = normalizer(df)
     df.info()
