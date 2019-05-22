@@ -8,7 +8,7 @@ import pyltr
 from data_preprocess import prepare_for_mart
 
 
-def train_and_save(training_set, validation_set, model_name):
+def train_and_save(training_set, validation_set, model_name, params, i=0):
 
     if not os.path.exists(f"{training_set}.pkl"):
         features, relevancies, search_ids, prop_ids = prepare_for_mart(
@@ -39,18 +39,10 @@ def train_and_save(training_set, validation_set, model_name):
 
     model = pyltr.models.LambdaMART(
         metric=metric,
-        n_estimators=10000,
-        learning_rate=0.02,
-        max_features=0.7,
-        subsample=1.0,
-        min_samples_split=16,
-        max_depth=7,
-        query_subsample=1.0,
-        max_leaf_nodes=None,
-        min_samples_leaf=64,
         verbose=1,
+        **params
     )
-    with open("training_curves.csv", 'w') as f:
+    with open(f"training_curves{i}.csv", 'w') as f:
         blah = csv.writer(f, delimiter=';')
         blah.writerow(['Iter', 'Train score', 'OOB Improve', 'remaining_time', 'monitor_output'])
 
@@ -98,5 +90,16 @@ if __name__ == '__main__':
     test_set = "test_set_VU_DM"
     model_name = f"model_{training_set}"
     output_name = f"output_{model_name}_{test_set}"
-    train_and_save(training_set, validation_set, model_name)
+
+    params = dict(n_estimators = 1800,
+            learning_rate = 0.02,
+            max_features = 0.5,
+            subsample = 1.0,
+            min_samples_split = 16,
+            max_depth = 2,
+            query_subsample = 1.0,
+            max_leaf_nodes = None,
+            min_samples_leaf = 64)
+
+    train_and_save(training_set, validation_set, model_name, params)
     predict_generate(test_set, model_name, output_name)
