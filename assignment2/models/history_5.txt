@@ -1,0 +1,30 @@
+(dmt) daan@DTA-160198:~/uva_data_mining_techniques/assignment2/models$ python run_experiment5.py
+/home/daan/miniconda3/envs/dmt/lib/python3.7/site-packages/sklearn/externals/six.py:31: DeprecationWarning: The module is deprecated in version 0.21 and will be removed in version 0.23 since we've dropped support for Python 2.7. Please rely on the official version of six (https://pypi.org/project/six/).
+  "(https://pypi.org/project/six/).", DeprecationWarning)
+ Iter  Train score    Remaining                           Monitor Output 
+    1       0.3317    11844.43m      C:      0.2340 B:      0.2340 S:  0
+    2       0.3704    12070.81m      C:      0.2648 B:      0.2648 S:  0
+    3       0.3915    12071.76m      C:      0.2816 B:      0.2816 S:  0
+    4       0.4205    12067.78m      C:      0.2997 B:      0.2997 S:  0
+    5       0.4223    12081.75m      C:      0.3108 B:      0.3108 S:  0
+    6       0.4255    12096.30m      C:      0.3196 B:      0.3196 S:  0
+    7       0.4302    12099.38m      C:      0.3219 B:      0.3219 S:  0
+    8       0.4342    12119.19m      C:      0.3224 B:      0.3224 S:  0
+    9       0.4368    12148.69m      C:      0.3327 B:      0.3327 S:  0
+   10       0.4388    12183.63m      C:      0.3340 B:      0.3340 S:  0
+   15       0.4413    12165.15m      C:      0.3343 B:      0.3346 S:  1
+   20       0.4476    12131.68m      C:      0.3339 B:      0.3359 S:  2
+   25       0.4513    12082.39m      C:      0.3363 B:      0.3369 S:  4
+   30       0.4565    12044.95m      C:      0.3467 B:      0.3467 S:  0
+   35       0.4608    11979.33m      C:      0.3530 B:      0.3530 S:  0
+   40       0.4652    11955.25m      C:      0.3612 B:      0.3612 S:  0
+   45       0.4696    11900.45m      C:      0.3690 B:      0.3690 S:  0
+   50       0.4765    11842.73m      C:      0.3810 B:      0.3810 S:  0
+   60       0.4821    11762.17m      C:      0.3871 B:      0.3871 S:  0
+   70       0.4874    11667.72m      C:      0.3957 B:      0.3957 S:  0
+   80       0.4920    11579.57m      C:      0.4042 B:      0.4042 S:  0
+   90       0.4952    11497.09m      C:      0.4092 B:      0.4092 S:  0
+  100       0.4993    11422.59m      C:      0.4135 B:      0.4135 S:  0
+  120       0.5056    11282.60m      C:      0.4238 B:      0.4238 S:  0
+  140       0.5119    11137.58m      C:      0.4328 B:      0.4328 S:  0
+  160       0.5185    10971.57m      C:      0.4402 B:      0.4402 S:  0
