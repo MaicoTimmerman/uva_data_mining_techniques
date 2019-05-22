@@ -63,33 +63,40 @@ def show_country_clusters(df):
     labels = df.groupby("prop_country_id").country_cluster.min()
     scatter_data = pd.concat([scatter_data, labels], axis=1)
 
-    ax = scatter_data.plot(kind='scatter', x='mean', y='std', c='country_cluster', colormap='viridis')
+    ax = scatter_data.plot(kind='scatter', x='mean', y='std', c='country_cluster', colormap='jet')
     plt.show()
 
 def box_plot_variable(df):
-
+    sns.set(style="whitegrid")
     to_drop = ['prop_id', 'site_id', 'visitor_location_country_id', 'prop_country_id', 'orig_destination_distance',
-                'srch_destination_id']
-                # ,'srch_query_affinity_score', 'srch_saturday_night_bool']
+                'srch_destination_id', 'srch_saturday_night_bool', 'click_bool', 'booking_bool', 'random_bool',
+               'promotion_flag', 'prop_brand_bool',
+               'price_usd', 'comp_diff_avg', 'gross_bookings_usd', 'visitor_hist_adr_usd',
+               'srch_booking_window', 'srch_query_affinity_score']
+
 
     df_boxplot = df.drop(columns=to_drop)
-    ax = df_boxplot.boxplot(showfliers=False, )
-
-    # labels = list(map(lambda x: x.split(".")[-1], df.columns.values))
-    # labels.insert(0, "")
-
-    # labels = df.columns
-    # ax.set_xticks(np.arange(len(labels)))
-    # ax.set_xticklabels(labels)
+    # ax = sns.boxplot(data=df_boxplot)
+    ax = df_boxplot.boxplot(showfliers=True, )
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
          rotation_mode="anchor")
-    # fig.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.2)
     plt.show()
 
-def show_me_the_money(df):
+    to_loop = ['comp_diff_avg', 'gross_bookings_usd', 'visitor_hist_adr_usd',
+                        'srch_booking_window', 'srch_query_affinity_score']
+    for variable in to_loop:
 
-    df.groupby("booking_bool").price_usd.plot.hist(logy=True, sharex=True, sharey=True, bins=20)#, range=(0,200000))
+        ax = df.boxplot(column=variable, showfliers=True, )
+        # ax = sns.boxplot(data=df_boxplot, )
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+        plt.gcf().subplots_adjust(bottom=0.2)
+        plt.show()
+
+def show_me_the_money(df, range=2000):
+
+    df.groupby("booking_bool").price_usd.plot.hist(logy=True, sharex=True, sharey=True, bins=20, range=(0, range))
     # pd.DataFrame.hist(  data=df, column='price_usd', by='booking_bool',
     #                     log=True, stacked=True, sharex=True, sharey=True)
     L=plt.legend()
@@ -186,11 +193,17 @@ def country_price_vagina_plots(df):
         countries = [219, 92, 55, 31, 220, 205, 100, 99, 130, 98, 59, 216, 129, 158, 2, 15, 132, 181]
         df_vio = df_vio.loc[df_vio['visitor_location_country_id'].isin(countries)]
 
+    sorter = df_vio.groupby('visitor_location_country_id').mean()
+    # print(sorter)
+    sorter = sorter.sort_values("price_usd").index
     ax = sns.violinplot(y=df_vio.price_usd, x=df_vio.visitor_location_country_id,
                         data=df_vio, #palette=sns.cubehelix_palette(8),
                         hue=df_vio.random_bool,
-                        split=True)
+                        split=True,
+                        order = sorter)
 
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
     # ax = sns.violinplot(y=df_vio.price_usd, x=df_vio.visitor_location_country_id,
     #                     data=df_vio, #palette=sns.cubehelix_palette(8),
     #                     hue=df_vio.booking_bool,
@@ -244,12 +257,12 @@ def booking_days(df):
     df = df[df['booking_bool'] == 1]
     booking_doys = df['date_time'].apply(lambda x: x.timetuple().tm_yday)
     # booking_doys.plot.hist(bins=365, logy=True, alpha=0.5, label="Booking date")
-    sns.distplot(booking_doys, bins=365, label="Booking date weekday", kde=False)
+    sns.distplot(booking_doys, bins=365, label="Date when booking made", kde=False)
 
 
     booking_doys = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday)
     # booking_doys.plot.hist(bins=365, logy=True, alpha=0.5, label="Check in date")
-    sns.distplot(booking_doys, bins=365, label="Check in date weekday", kde=False)
+    sns.distplot(booking_doys, bins=365, label="Check in date", kde=False)
 
     plt.xlim(0, 365)
     plt.title("Check in times and booking dates of the dataset")
@@ -298,5 +311,64 @@ def polar_booking_days(df):
     plt.legend()
     plt.show()
 
+def children_taken(df):
+    df = df[df['booking_bool'] == 1]
+    df['Days'] = df['date_time'].apply(lambda x: x.timetuple().tm_yday)
+    # print(df.groupby('temp').mean().srch_adults_count)
+    to_plot = df.groupby('Days').sum().srch_adults_count
+    # booking_doys = df['srch_adults_count'].apply(lambda x: x.timetuple().tm_yday)
+    to_plot.plot(alpha=0.5, label="Adults mean")
+    # sns.distplot(to_plot, bins=365, label="Adults count", kde=False)
+
+    to_plot2 = df.groupby('Days').sum().srch_children_count
+    uuh_hoe_doeikdit = to_plot / to_plot2
+    # print(df.groupby('temp').mean().srch_children_count)
+    to_plot2.plot(alpha=0.5, label="Children mean")
+    uuh_hoe_doeikdit.plot(alpha=0.5, label="Ratio")
+    # sns.distplot(to_plot, bins=365, label="Children count", kde=False)
+
+    plt.xlim(0, 365)
+    plt.title("Children and adult plot")
+    plt.legend()
+    plt.show()
+
+def length_of_stay(df):
+    df = df[df['booking_bool'] == 1]
+    df['Days'] = df['date_time'].apply(lambda x: x.timetuple().tm_yday)
+
+    to_plot = df.groupby('Days').mean().srch_length_of_stay
+
+    to_plot.plot(alpha=0.5, label="length of stay")
+
+    plt.xlim(0, 365)
+    plt.title("Length of stays")
+    plt.legend()
+    plt.show()
+
+def booking_window(df):
+    df = df[df['booking_bool'] == 1]
+
+    df_to_use = df[df['orig_destination_distance'] != 0]
+    # sns.regplot(x="srch_booking_window", y="srch_children_count", data=df)
+    # sns.regplot(x="srch_booking_window", y="price_usd", data=df)
+    # ax = sns.scatterplot(x="srch_booking_window", y="orig_destination_distance", data=df_to_use, alpha=0.3)
+    # sns.relplot(x="srch_booking_window", y="orig_destination_distance", kind="line", data=df_to_use, ax=ax)
+
+    sns.lmplot(x="srch_booking_window", y="orig_destination_distance", data=df_to_use,
+               order=1, ci=None, scatter_kws={"s": 80})
+
+    # sns.lmplot(x="srch_booking_window", y="srch_length_of_stay", data=df_to_use,
+    #            order=1, ci=None, scatter_kws={"s": 80})
+    # g.get_axes()[0].set_yscale('log')
+    # g.set_yscale('log')
+    plt.ylim(0, None)
+    plt.title("Booking window plots")
+    plt.legend()
+    plt.show()
+
+def scatterplot_stuff(df):
+    df = df[df['booking_bool'] == 1]
+    df.orig_destination_distance.plot.density()
+    plt.show()
 if __name__ == "__main__":
     visualize_trainings()
