@@ -20,7 +20,9 @@ from visualization import   scatterplotter, \
                             polar_graph, \
                             country_price_vagina_plots, \
                             position_bias, \
-                            histogram_site_id
+                            histogram_site_id, \
+                            booking_days, \
+                            polar_booking_days
 """XGboost?"""
 
 
@@ -115,7 +117,8 @@ def add_circular_day_of_year_features (df):
 
 def add_seasons(df):
     pd.options.mode.chained_assignment = None  # default='warn'
-
+    df['WEEKEND_date_time'] = ((pd.DatetimeIndex(df.date_time).dayofweek) // 5 == 1).astype(int)
+    df['WEEKEND_check_in'] = ((pd.DatetimeIndex(df.time_of_check_in).dayofweek) // 5 == 1).astype(int)
     df['SPRING'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([3,4,5]), 1, 0)
     df['SUMMER'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([6,7,8]), 1, 0)
     df['AUTUMN'] = np.where(pd.DatetimeIndex(df.time_of_check_in).month.isin([9,10,11]), 1, 0)
@@ -412,6 +415,8 @@ def preprocess(df, set_type):
     return df
 
 def make_plots (df):
+    booking_days(df)
+    polar_booking_days(df)
     showNaNs(df)
     box_plot_variable(df)
     show_me_the_money(df)
@@ -430,8 +435,6 @@ if __name__ == "__main__":
     # x, y, srch_ids, prop_ids = prepare_for_mart(path)
     #
     # exit(-1)
-    # path = '../data/tenth_train.csv'
-
     # path = '../data/tenth_train.csv'
 
     parser = argparse.ArgumentParser(prog='Datamining techniques assignment 1 (advanced)')

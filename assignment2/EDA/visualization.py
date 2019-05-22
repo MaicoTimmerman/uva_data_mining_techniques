@@ -140,8 +140,6 @@ def polar_graph(df):
     theta = np.linspace(0,2*np.pi,len(data_describe.index))
     ticks = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
 
-
-
     ax = plt.subplot(131, projection='polar')
 
     ax.plot(theta, data_describe['count'], 'r')
@@ -239,6 +237,65 @@ def visualize_trainings():
     plt.legend()
     plt.title("Training results LambdaMART")
     plt.xlabel("Iteration")
+    plt.show()
+
+def booking_days(df):
+
+    df = df[df['booking_bool'] == 1]
+    booking_doys = df['date_time'].apply(lambda x: x.timetuple().tm_yday)
+    # booking_doys.plot.hist(bins=365, logy=True, alpha=0.5, label="Booking date")
+    sns.distplot(booking_doys, bins=365, label="Booking date weekday", kde=False)
+
+
+    booking_doys = df['time_of_check_in'].apply(lambda x: x.timetuple().tm_yday)
+    # booking_doys.plot.hist(bins=365, logy=True, alpha=0.5, label="Check in date")
+    sns.distplot(booking_doys, bins=365, label="Check in date weekday", kde=False)
+
+    plt.xlim(0, 365)
+    plt.title("Check in times and booking dates of the dataset")
+    plt.legend()
+    plt.show()
+
+def polar_booking_days(df):
+
+    df = df[df['booking_bool'] == 1]
+    df = df[['price_usd', 'date_time', 'time_of_check_in']]
+    # df = df[df['country_cluster'] == 2]
+
+    data_date_time = df.groupby(by=[pd.DatetimeIndex(df.date_time).dayofyear]).describe()
+    data_time_of_check_in = df.groupby(by=[pd.DatetimeIndex(df.time_of_check_in).dayofyear]).describe()
+
+    data_date_time.loc[366] = data_date_time.loc[1]
+    data_time_of_check_in.loc[366] = data_time_of_check_in.loc[1]
+
+    data_date_time = data_date_time.reindex(list((v) for v in range(data_date_time.index[0], data_date_time.index[-1]+1))).fillna(1)
+    data_time_of_check_in = data_time_of_check_in.reindex(list((v) for v in range(data_time_of_check_in.index[0], data_time_of_check_in.index[-1]+1))).fillna(1)
+
+    # print(data_date_time['price_usd']['count'], len(data_date_time.index))
+    # data_date_time['price_usd']['count'].plot()
+    # data_time_of_check_in['price_usd']['count'].plot()
+    # plt.show()
+
+    data_date_time = data_date_time['price_usd']
+    data_time_of_check_in = data_time_of_check_in['price_usd']
+
+    theta = np.linspace(0, 2*np.pi, len(data_date_time.index))
+    ticks = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+    width = np.pi / 300
+    ax = plt.subplot(111, projection='polar')
+
+    ax.bar(theta, data_date_time['count'], width=width, label="date of booking",  alpha=1)
+    ax.set_xticklabels(ticks)
+    ax.set_xticks(np.linspace(0,2*np.pi,13))
+
+
+    ax.bar(theta, data_time_of_check_in['count'], width=width, label="time of check in", alpha=1)
+    ax.set_xticklabels(ticks)
+    ax.set_xticks(np.linspace(0,2*np.pi,13))
+
+
+    plt.title("Number of bookings made")
+    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
